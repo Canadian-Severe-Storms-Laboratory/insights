@@ -1,6 +1,7 @@
 import { SessionData } from '@remix-run/node';
 import { relations } from 'drizzle-orm';
 import {
+	bigint,
 	boolean,
 	decimal,
 	integer,
@@ -82,7 +83,7 @@ export const paths = pgTable('paths', {
 	frameposData: jsonb('framepos_data').array(),
 	panoramaData: jsonb('panorama_data'),
 	status: pathInitializationStatus('status').default('framepos').notNull(),
-	size: integer('size'),
+	size: bigint('size', { mode: 'number' }),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	hidden: boolean('hidden').default(false).notNull(),
 	updatedAt: timestamp('updated_at')
@@ -101,7 +102,7 @@ export const captures = pgTable('captures', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	file_name: text('file_name').notNull(),
 	source: imageSource('source').default('unknown').notNull(),
-	size: integer('size').notNull(),
+	size: bigint('size', { mode: 'number' }).notNull(),
 	takenAt: timestamp('taken_at').notNull(),
 	uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
 	lng: decimal('lng').notNull(),
@@ -175,7 +176,7 @@ export const dent = pgTable('dent', {
 export const scans = pgTable('scans', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	name: text('name').unique().notNull(),
-	size: integer('size'),
+	size: bigint('size', { mode: 'number' }),
 	folderName: text('folder_name').unique().notNull(),
 	eventDate: timestamp('event_date').notNull(),
 	captureDate: timestamp('capture_date').notNull(),

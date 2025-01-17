@@ -71,6 +71,13 @@
       "when": 1723989035601,
       "tag": "0009_mute_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1737150581145,
+      "tag": "0010_steady_talon",
+      "breakpoints": true
     }
   ]
 }

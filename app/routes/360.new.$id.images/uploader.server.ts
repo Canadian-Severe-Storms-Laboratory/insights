@@ -182,7 +182,7 @@ export const buildUploadHandler = ({
 			percentage
 		});
 
-		return new NodeOnDiskFile(filePath, contentType) as File;
+		return new NodeOnDiskFile(filePath, contentType) as unknown as File;
 	};
 
 	return handler;
