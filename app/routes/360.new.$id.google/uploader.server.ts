@@ -13,7 +13,7 @@ import { env } from '~/env.server';
 import { uploadEventBus } from '~/lib/event-bus.server';
 import { FrameposSchema } from '~/lib/framepos';
 import { PanoramaSchema } from '~/lib/panorama';
-import { UploadProgressEvent } from '../360.new.$id.images/uploader.server';
+import { UploadProgressEvent } from '../360.new.$id.imagesUpload/uploader.server';
 
 export const clearUploads = async (folderName: string, pathId: string) => {
 	// Get all street view uploads

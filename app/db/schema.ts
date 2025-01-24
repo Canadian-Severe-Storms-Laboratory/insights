@@ -119,7 +119,9 @@ export const pathSegments = pgTable('path_segments', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	index: integer('index').notNull(),
 	pathId: uuid('path_id')
-		.references(() => paths.id)
+		.references(() => paths.id, {
+			onDelete: 'cascade'
+		})
 		.notNull(),
 	captureId: uuid('capture_id')
 		.references(() => captures.id)
@@ -161,7 +163,9 @@ export const hailpad = pgTable('hailpad', {
 export const dent = pgTable('dent', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	hailpadId: uuid('hailpad_id')
-		.references(() => hailpad.id)
+		.references(() => hailpad.id, {
+			onDelete: 'cascade'
+		})
 		.notNull(),
 	angle: decimal('angle'),
 	majorAxis: decimal('major_axis').notNull(),

@@ -1,7 +1,7 @@
 import { Progress } from '~/components/ui/progress';
 import { useUploadProgress } from '~/lib/use-upload-progress';
 import { cn } from '~/lib/utils';
-import { UploadProgressEvent } from '~/routes/360.new.$id.images/uploader.server';
+import { UploadProgressEvent } from '~/routes/360.new.$id.imagesUpload/uploader.server';
 
 export function UploadProgress({ id, className }: { id: string; className?: string }) {
 	const progress = useUploadProgress<UploadProgressEvent>(id);
