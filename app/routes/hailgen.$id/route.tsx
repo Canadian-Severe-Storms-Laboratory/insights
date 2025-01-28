@@ -10,7 +10,6 @@ import { protectedRoute } from '~/lib/auth.server';
 import DentDetails from './dent-details';
 import HailpadDetails from './hailpad-details';
 import HailpadMap from './hailpad-map';
-import { useUploadStatus } from '~/lib/use-upload-status';
 
 export type UploadStatusEvent = Readonly<{
 	id: string;
@@ -260,8 +259,6 @@ export default function () {
 	});
 
 	const { userId, dents, depthMapPath, boxfit, maxDepth, adaptiveBlockSize, adaptiveC, hailpadName, hailpadId } = data;
-
-	const status = useUploadStatus<UploadStatusEvent>(hailpadId);
 	const [performingAnalysis, setPerformingAnalysis] = useState<boolean>(actionData?.analysisStatus || false);
 
 	useEffect(() => {
@@ -272,13 +269,7 @@ export default function () {
 		if (userId) setAuthenticated(true);
 	}, [userId]);
 
-	useEffect(() => {
-		// Reload window on successful upload and retreival of updated data from service
-		if (status && status.success) {
-			window.location.reload();
-			setPerformingAnalysis(false);
-		}
-	}, [status]);
+	// TODO: Reload window on successful upload and retreival of updated data from service
 
 	useEffect(() => {
 		// Convert major and minor axes from px to mm based on boxfit length

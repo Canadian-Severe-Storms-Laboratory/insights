@@ -4,7 +4,6 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
-import { Progress } from '~/components/ui/progress';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Spinner } from '~/components/ui/spinner';
 import { Actions } from './actions';
@@ -102,15 +101,8 @@ export function PathCard({
 				</div>
 			</div>
 			<CardContent>
-				{path.status === 'processing' && (
-					<div className="flex flex-row items-center gap-2 pb-4">
-						{!failedFetch && !!progress && (
-							<>
-								<p>Processing {progress.toFixed(1)}%</p>
-								<Progress value={progress} />
-							</>
-						)}
-					</div>
+				{path.status === 'processing' && !failedFetch && !!progress && (
+					<p className="pb-4">Processing {progress.toFixed(1)}%</p>
 				)}
 				<div className="h-[400px] w-full overflow-hidden rounded-md lg:h-96">
 					<Suspense fallback={<Skeleton />}>

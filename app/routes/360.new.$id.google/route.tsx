@@ -1,16 +1,10 @@
-import {
-	ActionFunctionArgs,
-	json,
-	LoaderFunctionArgs,
-	redirect,
-	unstable_parseMultipartFormData
-} from '@remix-run/node';
-import { Form, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
+import { json, LoaderFunctionArgs, redirect } from '@remix-run/node';
+import { useLoaderData, useNavigation } from '@remix-run/react';
+import axios, { AxiosError } from 'axios';
 import { eq } from 'drizzle-orm';
 import { LucideLink } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { UploadProgress } from '~/components/progress';
 import { Button } from '~/components/ui/button';
 import {
 	Card,
@@ -23,11 +17,10 @@ import {
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Spinner } from '~/components/ui/spinner';
-import { db, updatePathSize } from '~/db/db.server';
+import { db } from '~/db/db.server';
 import { paths } from '~/db/schema';
-import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
-import { buildUploadHandler, clearUploads } from './uploader.server';
+import { unknownError, UploadResponse } from '~/lib/upload-types';
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await protectedRoute(request);
@@ -51,104 +44,85 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return json(path);
 }
 
-export async function action({ request, params }: ActionFunctionArgs) {
-	if (!params.id) {
-		return redirect('/360');
-	}
-
-	await protectedRoute(request);
-	const path = await db.query.paths.findFirst({
-		where: eq(paths.id, params.id)
-	});
-
-	if (!path) {
-		throw new Error('Path not found');
-	}
-
-	// Delete old panorama files
-	await clearUploads(path.folderName, path.id);
-
-	const formData = await unstable_parseMultipartFormData(
-		request,
-		buildUploadHandler({
-			path,
-			maxFileSize: 50 * 1024 * 1024
-		})
-	);
-
-	const files = formData.getAll('images');
-
-	let invalid = false;
-
-	for (const file of files) {
-		if (!file) {
-			invalid = true;
-			break;
-		}
-	}
-
-	if (invalid) {
-		try {
-			await clearUploads(path.folderName, path.id);
-		} catch (error) {
-			console.error(error);
-		}
-
-		return json(
-			{
-				status: 'error',
-				error: {
-					files: 'Invalid upload'
-				}
-			},
-			{
-				status: 400
-			}
-		);
-	}
-
-	if (
-		files.length === 0 ||
-		files.length > Object.keys(path.panoramaData as Record<string, unknown>).length
-	) {
-		try {
-			await clearUploads(path.folderName, path.id);
-		} catch (error) {
-			console.error(error);
-		}
-
-		return json(
-			{
-				status: 'error',
-				error: {
-					files: 'Invalid number of files'
-				}
-			},
-			{
-				status: 400
-			}
-		);
-	}
-
-	await updatePathSize(path.id);
-
-	// Set status to processing
-	await db
-		.update(paths)
-		.set({
-			status: env.SERVICE_360_ENABLED ? 'processing' : 'complete'
-		})
-		.where(eq(paths.id, path.id));
-
-	return redirect(`/360/${path.id}`);
-}
-
 export default function () {
 	const navigation = useNavigation();
 	const path = useLoaderData<typeof loader>();
-	const lastResult = useActionData<typeof action>();
 	const [copyClicked, setCopyClicked] = useState(false);
-	const [images, setImages] = useState<string[]>([]);
+	const [images, setImages] = useState<File[]>([]);
+	const [lastResult, setLastResult] = useState<UploadResponse | null>(null);
+	const [uploadProgress, setUploadProgress] = useState({
+		percentage: 0,
+		submitting: false
+	});
+
+	const upload = useCallback(
+		async (e: React.FormEvent) => {
+			e.preventDefault();
+
+			// Use axios to upload the images without refreshing the page or timing out
+			const formData = new FormData();
+			images.forEach((image) => formData.append(image.name, image));
+
+			try {
+				setUploadProgress({
+					percentage: 0,
+					submitting: true
+				});
+
+				const response = await axios({
+					method: 'post',
+					url: `/360/new/${path.id}/google/upload`,
+					data: formData,
+					headers: {
+						'Content-Type': 'multipart/form-data'
+					},
+					onUploadProgress: (progressEvent) => {
+						console.info(progressEvent);
+						const percentCompleted = progressEvent.lengthComputable
+							? progressEvent.progress || 0 * 100
+							: 0;
+						setUploadProgress({
+							percentage: percentCompleted,
+							submitting: true
+						});
+					}
+				});
+
+				// Status is 303, redirect to the next page
+				if (response.status === 303) {
+					window.location.href = response.headers.location;
+					return;
+				}
+
+				// Unknown status
+				console.info(response);
+				return setLastResult(unknownError);
+			} catch (error: AxiosError | unknown) {
+				if (error instanceof AxiosError) {
+					const response = error.response;
+					if (!response) return setLastResult(unknownError);
+					if (response.status === 400) return setLastResult(response.data);
+					if (response.status === 413) {
+						return setLastResult({
+							status: 'error',
+							error: {
+								message: 'Upload size too large'
+							}
+						});
+					}
+					return setLastResult(unknownError);
+				}
+
+				return setLastResult(unknownError);
+			} finally {
+				setUploadProgress({
+					percentage: 0,
+					submitting: false
+				});
+			}
+		},
+		[images]
+	);
 
 	return (
 		<main className="flex h-full items-center justify-center">
@@ -157,7 +131,7 @@ export default function () {
 					<CardTitle>{path.name}</CardTitle>
 					<CardDescription>Upload the images downloaded from Google.</CardDescription>
 				</CardHeader>
-				<Form method="post" encType="multipart/form-data">
+				<form onSubmit={upload}>
 					<CardContent className="grid grid-cols-1 gap-2">
 						<fieldset className="grid gap-2" disabled={navigation.state === 'submitting'}>
 							<Label htmlFor="images">Copy Panorama IDs to download.</Label>
@@ -175,9 +149,6 @@ export default function () {
 							>
 								<LucideLink size={16} /> Copy
 							</Button>
-							{lastResult && lastResult.status === 'error' && (
-								<p className="text-sm text-primary/60">{lastResult.error?.['files']}</p>
-							)}
 						</fieldset>
 						<fieldset
 							className="grid gap-2"
@@ -191,23 +162,22 @@ export default function () {
 								name="images"
 								onChange={(event) => {
 									const files = Array.from(event.target.files || []);
-									setImages(files.map((file) => file.name));
+									setImages(files);
 								}}
 								multiple
 								required
 							/>
 							{lastResult && lastResult.status === 'error' && (
-								<p className="text-sm text-primary/60">{lastResult.error?.['files']}</p>
+								<p className="text-sm text-primary/60">{lastResult.error?.['message']}</p>
 							)}
 						</fieldset>
-						<UploadProgress id={path.id} className="pt-2" />
 					</CardContent>
 					<CardFooter className="space-x-4">
 						<Button type="submit" disabled={navigation.state === 'submitting' || !copyClicked}>
 							{navigation.state === 'submitting' && (
 								<Spinner className="mr-2 fill-primary" size={16} />
 							)}
-							{navigation.state === 'submitting' ? 'Uploading...' : 'Upload'}
+							{uploadProgress.submitting ? `${uploadProgress.percentage.toFixed(4)}%` : 'Upload'}
 						</Button>
 						{images.length !== Object.keys(path.panoramaData as Record<string, unknown>).length && (
 							<p className="text-sm text-primary/60">
@@ -216,7 +186,7 @@ export default function () {
 							</p>
 						)}
 					</CardFooter>
-				</Form>
+				</form>
 			</Card>
 		</main>
 	);

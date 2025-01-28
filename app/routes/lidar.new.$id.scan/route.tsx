@@ -103,7 +103,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return json(submission.reply());
 	}
 
-	const file = formData.get('scan') as NodeOnDiskFile;
+	const file = formData.get('scan') as unknown as NodeOnDiskFile;
 
 	if (!file) {
 		await emptyDirectory();

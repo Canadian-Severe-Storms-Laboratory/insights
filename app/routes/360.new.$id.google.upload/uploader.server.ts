@@ -10,10 +10,8 @@ import { z } from 'zod';
 import { db } from '~/db/db.server';
 import { captures, pathSegments, paths } from '~/db/schema';
 import { env } from '~/env.server';
-import { uploadEventBus } from '~/lib/event-bus.server';
 import { FrameposSchema } from '~/lib/framepos';
 import { PanoramaSchema } from '~/lib/panorama';
-import { UploadProgressEvent } from '../360.new.$id.imagesUpload/uploader.server';
 
 export const clearUploads = async (folderName: string, pathId: string) => {
 	// Get all street view uploads
@@ -182,19 +180,9 @@ export const buildUploadHandler = ({
 			})
 			.where(and(eq(pathSegments.pathId, path.id), inArray(pathSegments.index, frameIndices)));
 
-		const segments = framepos.data.filter((frame) => frame.pano_id !== null).length;
-		const completeSegments = await db.query.pathSegments.findMany({
-			where: and(isNotNull(pathSegments.streetViewId), eq(pathSegments.pathId, path.id))
-		});
+		console.info(`Saved ${filename} to ${filePath}`);
 
-		const percentage = completeSegments.length / segments;
-
-		uploadEventBus.emit<UploadProgressEvent>({
-			id: path.id,
-			percentage
-		});
-
-		return new NodeOnDiskFile(filePath, contentType) as File;
+		return new NodeOnDiskFile(filePath, contentType) as unknown as File;
 	};
 
 	return handler;

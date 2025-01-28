@@ -182,7 +182,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 		.where(eq(paths.id, params.id));
 
-	return redirect(`/360/new/${params.id}/images`, { headers: { 'Cache-Control': 'no-store' } });
+	return redirect(`/360/new/${params.id}/images`);
 }
 
 export default function () {

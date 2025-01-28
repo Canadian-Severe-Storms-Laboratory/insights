@@ -1,20 +1,19 @@
 import { NodeOnDiskFile } from '@remix-run/node';
-import {
-	ActionFunctionArgs,
-	json,
-	redirect,
-	unstable_parseMultipartFormData
-} from '@remix-run/server-runtime';
+import { ActionFunctionArgs, unstable_parseMultipartFormData } from '@remix-run/server-runtime';
 import { eq } from 'drizzle-orm';
 import { db, updatePathSize } from '~/db/db.server';
 import { paths, pathSegments } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
+import { buildUploadResponse } from '~/lib/upload-util.server';
 import { buildUploadHandler, clearUploads } from './uploader.server';
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	if (!params.id) {
-		return redirect('/360');
+		return buildUploadResponse({
+			status: 'redirect',
+			data: '/360'
+		});
 	}
 
 	await protectedRoute(request);
@@ -23,7 +22,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	});
 
 	if (!path) {
-		throw new Error('Path not found');
+		return buildUploadResponse({
+			status: 'error',
+			data: {
+				message: 'Path not found'
+			}
+		});
 	}
 
 	// Check if the number of segments already matches the number of framepos data
@@ -32,24 +36,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	});
 
 	if (completedSegments.length === path.frameposData?.length) {
-		return redirect(`/360/new/${path.id}/google`);
+		return buildUploadResponse({
+			status: 'redirect',
+			data: `/360/new/${path.id}/google`
+		});
 	}
 
 	// Clear the uploads if the number of files does not match the number of segments
 	await clearUploads(path.folderName, path.id);
 
 	const files: FormDataEntryValue[] = [];
+	const uploadHandler = buildUploadHandler({
+		path,
+		maxFileSize: 50 * 1024 * 1024
+	});
 
 	try {
-		const formData = await unstable_parseMultipartFormData(
-			request,
-			buildUploadHandler({
-				path,
-				maxFileSize: 50 * 1024 * 1024
-			})
-		);
-
-		files.push(...formData.getAll('images'));
+		const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+		formData.forEach((value) => {
+			files.push(value);
+		});
 	} catch (error) {
 		console.error(error);
 		await clearUploads(path.folderName, path.id);
@@ -63,17 +69,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				console.error(error);
 			}
 
-			return json(
-				{
-					status: 'error',
-					error: {
-						files: 'Invalid upload'
-					}
-				},
-				{
-					status: 400
+			return buildUploadResponse({
+				status: 'error',
+				data: {
+					message: 'Invalid upload. Check server logs'
 				}
-			);
+			});
 		}
 	}
 
@@ -84,17 +85,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			console.error(error);
 		}
 
-		return json(
-			{
-				status: 'error',
-				error: {
-					files: 'Invalid number of files'
-				}
-			},
-			{
-				status: 400
+		return buildUploadResponse({
+			status: 'error',
+			data: {
+				message: `Invalid number of uploads, expected ${path.frameposData?.length} but got ${files.length}`
 			}
-		);
+		});
 	}
 
 	await updatePathSize(path.id);
@@ -122,5 +118,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	} else console.log('Service 360 is disabled');
 
-	return redirect(`/360/new/${path.id}/google`);
+	return buildUploadResponse({
+		status: 'redirect',
+		data: `/360/new/${path.id}/google`
+	});
 }

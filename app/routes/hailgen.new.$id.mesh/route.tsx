@@ -11,6 +11,7 @@ import {
 } from '@remix-run/node';
 import { Form, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import {
@@ -26,30 +27,6 @@ import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
-import { useEffect, useState } from 'react';
-import { useUploadStatus } from '~/lib/use-upload-status';
-
-export type UploadStatusEvent = Readonly<{
-	id: string;
-	dents: {
-		angle: string | null;
-		majorAxis: string;
-		minorAxis: string;
-		centroidX: string;
-		centroidY: string;
-	}[];
-	maxDepthLocation: number[];
-}>;
-
-interface HailpadDent {
-	// TODO: Use shared interface
-	angle: string | null;
-	centroidX: string;
-	centroidY: string;
-	majorAxis: string;
-	minorAxis: string;
-	maxDepth: string;
-}
 
 const schema = z.object({
 	mesh: z
@@ -117,7 +94,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	// Save the mesh to the associated hailpad folder
-	const file = formData.get('mesh') as NodeOnDiskFile;
+	const file = formData.get('mesh') as unknown as NodeOnDiskFile;
 
 	if (!file) {
 		throw new Error('Could not read the file.');
@@ -149,7 +126,6 @@ export default function () {
 	const navigation = useNavigation();
 	const hailpad = useLoaderData<typeof loader>();
 	const lastResult = useActionData<typeof action>();
-	const status = useUploadStatus<UploadStatusEvent>(hailpad.id);
 	const [form, fields] = useForm({
 		lastResult,
 		shouldValidate: 'onSubmit',
@@ -158,12 +134,7 @@ export default function () {
 
 	const [performingAnalysis, setPerformingAnalysis] = useState<boolean>(false);
 
-	useEffect(() => {
-		if (status && status.success) {
-			window.location.href = `/hailgen/new/${hailpad.id}/depth?x=${status.event?.maxDepthLocation[0]}&y=${status.event?.maxDepthLocation[1]}`;
-			setPerformingAnalysis(false);
-		}
-	}, [status]);
+	// TODO: Redirect to depth page
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		setPerformingAnalysis(true);
@@ -199,11 +170,8 @@ export default function () {
 						<p className="text-sm text-primary/60">{fields.mesh.errors}</p>
 					</CardContent>
 					<CardFooter>
-						<Button
-							type="submit"
-							disabled={!!fields.mesh.errors || performingAnalysis}
-						>
-							{performingAnalysis ? "Creating and processing depth map..." : "Next"}
+						<Button type="submit" disabled={!!fields.mesh.errors || performingAnalysis}>
+							{performingAnalysis ? 'Creating and processing depth map...' : 'Next'}
 						</Button>
 					</CardFooter>
 				</Form>

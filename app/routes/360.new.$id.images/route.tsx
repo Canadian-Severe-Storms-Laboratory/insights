@@ -1,9 +1,8 @@
 import { LoaderFunctionArgs, json, redirect } from '@remix-run/node';
-import { useLoaderData, useNavigation } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import axios, { AxiosError } from 'axios';
 import { eq } from 'drizzle-orm';
-import { useCallback, useState } from 'react';
-import { UploadProgress } from '~/components/progress';
+import React, { useCallback, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import {
 	Card,
@@ -19,20 +18,7 @@ import { Spinner } from '~/components/ui/spinner';
 import { db } from '~/db/db.server';
 import { pathSegments, paths } from '~/db/schema';
 import { protectedRoute } from '~/lib/auth.server';
-
-type ImageError = {
-	status: 'error';
-	error: {
-		files: string;
-	};
-};
-
-const unknownError: ImageError = {
-	status: 'error',
-	error: {
-		files: 'Unknown error. Check server logs'
-	}
-};
+import { UploadResponse, unknownError } from '~/lib/upload-types';
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await protectedRoute(request);
@@ -66,43 +52,82 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function () {
-	const navigation = useNavigation();
 	const path = useLoaderData<typeof loader>();
 	const [images, setImages] = useState<File[]>([]);
-	const [lastResult, setLastResult] = useState<ImageError | null>(null);
+	const [lastResult, setLastResult] = useState<UploadResponse | null>(null);
+	const [uploadProgress, setUploadProgress] = useState({
+		percentage: 0,
+		submitting: false
+	});
 
-	const upload = useCallback(async () => {
-		// Use axios to upload the images without refreshing the page or timing out
-		const formData = new FormData();
-		images.forEach((image) => {
-			formData.append('images', image);
-		});
+	const upload = useCallback(
+		async (e: React.FormEvent) => {
+			e.preventDefault();
 
-		try {
-			const response = await axios({
-				method: 'post',
-				url: `/360/new/${path.id}/imagesUpload`,
-				data: formData,
-				headers: {
-					'Content-Type': 'multipart/form-data'
+			// Use axios to upload the images without refreshing the page or timing out
+			const formData = new FormData();
+			images.forEach((image) => formData.append(image.name, image));
+
+			try {
+				setUploadProgress({
+					percentage: 0,
+					submitting: true
+				});
+
+				const response = await axios({
+					method: 'post',
+					url: `/360/new/${path.id}/images/upload`,
+					data: formData,
+					headers: {
+						'Content-Type': 'multipart/form-data'
+					},
+					onUploadProgress: (progressEvent) => {
+						console.info(progressEvent);
+						const percentCompleted = progressEvent.lengthComputable
+							? progressEvent.progress || 0 * 100
+							: 0;
+						setUploadProgress({
+							percentage: percentCompleted,
+							submitting: true
+						});
+					}
+				});
+
+				// Status is 303, redirect to the next page
+				if (response.status === 303) {
+					window.location.href = response.headers.location;
+					return;
 				}
-			});
 
-			// Read redirect from the response headers
-			const redirectUrl = response.headers['x-remix-location'];
-			if (redirectUrl) return (window.location = redirectUrl);
-			return window.location.reload();
-		} catch (error: AxiosError | unknown) {
-			if (error instanceof AxiosError) {
-				const response = error.response;
-				if (!response) return setLastResult(unknownError);
-				if (response.status === 400) return setLastResult(response.data);
+				// Unknown status
+				console.info(response);
 				return setLastResult(unknownError);
-			}
+			} catch (error: AxiosError | unknown) {
+				if (error instanceof AxiosError) {
+					const response = error.response;
+					if (!response) return setLastResult(unknownError);
+					if (response.status === 400) return setLastResult(response.data);
+					if (response.status === 413) {
+						return setLastResult({
+							status: 'error',
+							error: {
+								message: 'Upload size too large'
+							}
+						});
+					}
+					return setLastResult(unknownError);
+				}
 
-			return setLastResult(unknownError);
-		}
-	}, [images]);
+				return setLastResult(unknownError);
+			} finally {
+				setUploadProgress({
+					percentage: 0,
+					submitting: false
+				});
+			}
+		},
+		[images]
+	);
 
 	return (
 		<main className="flex h-full items-center justify-center">
@@ -111,9 +136,9 @@ export default function () {
 					<CardTitle>{path.name}</CardTitle>
 					<CardDescription>Upload the images captured from the camera.</CardDescription>
 				</CardHeader>
-				<div>
+				<form onSubmit={upload}>
 					<CardContent>
-						<fieldset className="grid gap-2" disabled={navigation.state === 'submitting'}>
+						<fieldset className="grid gap-2" disabled={uploadProgress.submitting}>
 							<Label htmlFor="images">Images</Label>
 							<Input
 								type="file"
@@ -128,23 +153,17 @@ export default function () {
 								required
 							/>
 							{lastResult && (
-								<p className="text-sm text-primary/60">{lastResult.error?.['files']}</p>
+								<p className="text-sm text-primary/60">{lastResult.error?.['message']}</p>
 							)}
 						</fieldset>
-						<UploadProgress id={path.id} className="pt-2" />
 					</CardContent>
 					<CardFooter className="space-x-4">
 						<Button
 							type="submit"
-							disabled={
-								navigation.state === 'submitting' || images.length !== path.frameposData?.length
-							}
-							onClick={upload}
+							disabled={images.length !== path.frameposData?.length || uploadProgress.submitting}
 						>
-							{navigation.state === 'submitting' && (
-								<Spinner className="mr-2 fill-primary" size={16} />
-							)}
-							{navigation.state === 'submitting' ? 'Uploading...' : 'Upload'}
+							{uploadProgress.submitting && <Spinner className="mr-2 fill-primary" size={16} />}
+							{uploadProgress.submitting ? `${uploadProgress.percentage.toFixed(4)}%` : 'Upload'}
 						</Button>
 						{images.length !== path.frameposData?.length && (
 							<p className="text-sm text-primary/60">
@@ -152,7 +171,7 @@ export default function () {
 							</p>
 						)}
 					</CardFooter>
-				</div>
+				</form>
 			</Card>
 		</main>
 	);

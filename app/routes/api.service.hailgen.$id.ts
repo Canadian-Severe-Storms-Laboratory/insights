@@ -1,12 +1,10 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
 import { eq } from 'drizzle-orm';
 import { db } from '~/db/db.server';
-import { hailpad, dent } from '~/db/schema';
+import { dent, hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
-import { uploadEventBus } from '~/lib/event-bus.server';
-import { StatusResponseSchema, StatusUpdateSchema } from '~/lib/service-hailgen';
-import { UploadStatusEvent } from './hailgen.new.$id.mesh/route';
+import { StatusResponseSchema } from '~/lib/service-hailgen';
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const id = params.id;
@@ -26,7 +24,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		});
 
 		if (!queriedHailpad)
-			return new Response(null, { status: 404, statusText: 'Could not find the requested hailpad' });
+			return new Response(null, {
+				status: 404,
+				statusText: 'Could not find the requested hailpad'
+			});
 
 		if (!env.SERVICE_HAILGEN_ENABLED)
 			return new Response(null, { status: 400, statusText: 'Service not enabled' });
@@ -104,13 +105,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		if (newDent.length != 1) {
 			throw new Error('Error creating dent');
 		}
-	});
-
-	// Emit an event to the status bus to notify the client of the status change
-	uploadEventBus.emit<UploadStatusEvent>({
-		id,
-		dents: data.dents,
-		maxDepthLocation: data.maxDepthLocation,
 	});
 
 	// if (update.rowCount !== 1) return new Response(null, { status: 404 });

@@ -10,13 +10,7 @@ import { z } from 'zod';
 import { db } from '~/db/db.server';
 import { captures, pathSegments, paths } from '~/db/schema';
 import { env } from '~/env.server';
-import { uploadEventBus } from '~/lib/event-bus.server';
 import { FrameposSchema } from '~/lib/framepos';
-
-export type UploadProgressEvent = Readonly<{
-	id: string;
-	percentage: number;
-}>;
 
 export const clearUploads = async (folderName: string, pathId: string) => {
 	await rm(`${env.PATH_DIRECTORY}/${folderName}`, { recursive: true }).catch(() => {});
@@ -166,21 +160,7 @@ export const buildUploadHandler = ({
 			throw new Error('Could not save segment');
 		}
 
-		const totalSegments = (
-			await db
-				.select({
-					count: count(pathSegments.id)
-				})
-				.from(pathSegments)
-				.where(eq(pathSegments.pathId, path.id))
-		)[0].count;
-
-		const percentage = path.frameposData ? totalSegments / path.frameposData.length : 0;
-
-		uploadEventBus.emit<UploadProgressEvent>({
-			id: path.id,
-			percentage
-		});
+		console.info(`Saved ${filename} to ${filePath}`);
 
 		return new NodeOnDiskFile(filePath, contentType) as unknown as File;
 	};
