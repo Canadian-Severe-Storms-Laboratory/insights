@@ -74,7 +74,7 @@ export default function () {
 					submitting: true
 				});
 
-				const response = await axios({
+				const response = await axios<UploadResponse>({
 					method: 'post',
 					url: `/360/new/${path.id}/images/upload`,
 					data: formData,
@@ -93,9 +93,9 @@ export default function () {
 					}
 				});
 
-				// Status is 303, redirect to the next page
-				if (response.status === 303) {
-					window.location.href = response.headers.location;
+				// Status is 302, redirect to the next page
+				if (response.status === 302 && response.data.status === 'redirect') {
+					window.location.href = response.headers.Location || response.data.to;
 					return;
 				}
 
@@ -152,8 +152,8 @@ export default function () {
 								multiple
 								required
 							/>
-							{lastResult && (
-								<p className="text-sm text-primary/60">{lastResult.error?.['message']}</p>
+							{lastResult && lastResult.status === 'error' && (
+								<p className="text-sm text-primary/60">{lastResult.error.message}</p>
 							)}
 						</fieldset>
 					</CardContent>

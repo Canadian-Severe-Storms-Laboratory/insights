@@ -16,7 +16,19 @@ export function buildUploadResponse({
 	  }): Response {
 	switch (status) {
 		case 'redirect':
-			return Response.redirect(data, 303);
+			return new Response(
+				JSON.stringify({
+					status: 'redirect',
+					to: data
+				} as UploadResponse),
+				{
+					status: 302,
+					statusText: 'Found',
+					headers: {
+						Location: data
+					}
+				}
+			);
 		case 'error':
 			return new Response(
 				JSON.stringify({

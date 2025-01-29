@@ -3,6 +3,9 @@ export type UploadResponse = {
 	error: {
 		message: string;
 	};
+} | {
+	status: 'redirect';
+	to: string;
 };
 
 export const unknownError: UploadResponse = {
