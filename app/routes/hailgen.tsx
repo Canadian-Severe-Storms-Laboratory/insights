@@ -21,7 +21,7 @@ export default function Layout() {
 
 	return (
 		<main className="h-full bg-muted/40">
-			<Header title="Hailgen" user={data.user} />
+			<Header title="NHP Hailgen" user={data.user} />
 			<div className="mx-6 py-4">
 				<Outlet context={data.user} />
 			</div>

@@ -11,7 +11,7 @@ import {
 } from '@remix-run/node';
 import { Form, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import {
@@ -23,19 +23,37 @@ import {
 	CardTitle
 } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
 import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
 
 const schema = z.object({
-	mesh: z
+	pairAnalysis: z.boolean(),
+	postMesh: z
 		.instanceof(NodeOnDiskFile, {
 			message: 'Please select a .stl file.'
 		})
 		.refine((file) => {
 			return file.name.endsWith('.stl');
 		}, 'File should be of .stl type.')
+}).refine((data) => {
+	if (data.pairAnalysis) {
+		return z.object({
+			preMesh: z
+				.instanceof(NodeOnDiskFile, {
+					message: 'Please select a .stl file.'
+				})
+				.refine((file) => {
+					return file.name.endsWith('.stl');
+				}, 'File should be of .stl type.')
+		}).safeParse(data).success;
+	}
+	return true;
+}, {
+	message: 'Please select a .stl file for the pre-hit mesh.',
+	path: ['preMesh']
 });
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -87,7 +105,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	});
 
 	const formData = await unstable_parseMultipartFormData(request, handler);
-	const submission = parseWithZod(formData, { schema });
+	let pairAnalysis = formData.get('pairAnalysis') === 'true';
+
+	const data = new FormData();
+	data.append('pairAnalysis', pairAnalysis.toString());
+	data.append('postMesh', formData.get('postMesh') as Blob);
+	if (pairAnalysis) {
+		data.append('preMesh', formData.get('preMesh') as Blob);
+	}
+
+	const submission = parseWithZod(data, { schema });
 
 	if (submission.status !== 'success') {
 		return json(submission.reply());
@@ -133,6 +160,7 @@ export default function () {
 	});
 
 	const [performingAnalysis, setPerformingAnalysis] = useState<boolean>(false);
+	const [pairAnalysis, setPairAnalysis] = useState<boolean>(false);
 
 	// TODO: Redirect to depth page
 
@@ -149,7 +177,7 @@ export default function () {
 			<Card className="sm:min-w-[500px]">
 				<CardHeader>
 					<CardTitle>{hailpad.name}</CardTitle>
-					<CardDescription>Upload the 3D hailpad mesh.</CardDescription>
+					<CardDescription>Configure the analysis and upload the corresponding 3D hailpad mesh(es).</CardDescription>
 				</CardHeader>
 				<Form
 					method="post"
@@ -158,11 +186,51 @@ export default function () {
 					onSubmit={handleSubmit}
 					noValidate
 				>
+					<input type="hidden" name="pairAnalysis" value={pairAnalysis.toString()} />
 					<CardContent className="grid gap-2">
+						<Label htmlFor="analysis-type">Analysis Type</Label>
+						<div id="analysis-type" className="flex flex-col text-sm">
+							<label>
+								<input
+									type="radio"
+									value="single"
+									checked={pairAnalysis == false}
+									onChange={(e) => setPairAnalysis(e.target.value === "pair")}
+									className="mr-2"
+								/>
+								Single hailpad
+							</label>
+							<label className="flex flex-row space-x-2">
+								<input
+									type="radio"
+									value="pair"
+									checked={pairAnalysis == true}
+									onChange={(e) => setPairAnalysis(e.target.value === "pair")}
+									className="mr-2"
+								/>
+								Hailpad pair
+							</label>
+						</div>
+						{pairAnalysis == true &&
+							<>
+								<Label htmlFor="pre-mesh" className="mt-4">Pre-hit Mesh</Label>
+								<Input
+									type="file"
+									id="pre-mesh"
+									key={fields.preMesh.key}
+									name={fields.preMesh.name}
+									accept=".stl"
+									required
+									disabled={performingAnalysis}
+								/>
+							</>
+						}
+						<Label htmlFor="post-mesh" className="mt-4">Post-hit Mesh</Label>
 						<Input
 							type="file"
-							key={fields.mesh.key}
-							name={fields.mesh.name}
+							id="post-mesh"
+							key={fields.postMesh.name}
+							name={fields.postMesh.name}
 							accept=".stl"
 							required
 							disabled={performingAnalysis}

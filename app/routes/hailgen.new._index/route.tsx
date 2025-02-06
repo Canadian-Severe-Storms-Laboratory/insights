@@ -7,6 +7,11 @@ import { mkdir } from 'node:fs/promises';
 import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger
+} from '~/components/ui/popover';
+import {
 	Card,
 	CardContent,
 	CardDescription,
@@ -19,6 +24,8 @@ import { Label } from '~/components/ui/label';
 import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { protectedRoute } from '~/lib/auth.server';
+import { Info } from 'lucide-react';
+import { BoxfitDiagram } from '~/components/boxfit-diagram';
 
 // Instead of sharing a schema, prepare a schema creator
 function createSchema(options?: { isFolderNameUnique: (folderName: string) => Promise<boolean> }) {
@@ -169,7 +176,27 @@ export default function () {
 									<p className="text-sm text-primary/60">{fields.folderName.errors}</p>
 								</div>
 								<div>
-									<Label htmlFor={fields.boxfit.id}>Box-fitting Length</Label>
+									<div className="flex flex-row space-x-2 pt-2">
+										<Label htmlFor={fields.boxfit.id}>Box-fitting Length</Label>
+										<Popover>
+											<PopoverTrigger>
+												<Info size={12} />
+											</PopoverTrigger>
+											<PopoverContent className="w-[420px]">
+												<div className="space-y-4">
+													<div className="flex grid-cols-2 gap-2">
+														<BoxfitDiagram size={300} className="h-fit" />
+														<div className="w-fit mb-2">
+															<p className="text-lg font-semibold">About Box-fitting Length</p>
+															<CardDescription className="text-sm">
+																The box-fitting length (<span className="italic">l</span>) is the largest length of the smallest box that can enclose the hailpad, measured in mm. This value is used to map pixel measurements to real-world units.
+															</CardDescription>
+														</div>
+													</div>
+												</div>
+											</PopoverContent>
+										</Popover>
+									</div>
 									<Input
 										type="number"
 										key={fields.boxfit.key}

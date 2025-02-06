@@ -2,7 +2,7 @@
 	"name": "insights",
 	"private": true,
 	"sideEffects": false,
-	"version": "2024.0.1",
+	"version": "2025.0.0",
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
