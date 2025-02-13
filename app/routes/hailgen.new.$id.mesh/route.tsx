@@ -22,12 +22,18 @@ import {
 	CardHeader,
 	CardTitle
 } from '~/components/ui/card';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger
+} from '~/components/ui/popover';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
+import { Info } from 'lucide-react';
 
 const schema = z.object({
 	pairAnalysis: z.boolean(),
@@ -99,8 +105,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		},
 		directory: filePath,
 		avoidFileConflicts: false,
-		file({ filename }) {
-			return filename;
+		file({ name }) {
+			if (name === 'preMesh') {
+				return 'pre-hailpad.stl';
+			} else if (name === 'postMesh') {
+				return 'post-hailpad.stl';
+			}
+			return name;
 		}
 	});
 
@@ -120,28 +131,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return json(submission.reply());
 	}
 
-	// Save the mesh to the associated hailpad folder
-	const file = formData.get('mesh') as unknown as NodeOnDiskFile;
+	// Save the mesh(es) to the associated hailpad folder
+	const preFile = formData.get('preMesh') as unknown as NodeOnDiskFile;
+	const postFile = formData.get('postMesh') as unknown as NodeOnDiskFile;
 
-	if (!file) {
-		throw new Error('Could not read the file.');
+
+	if (!preFile || !postFile) {
+		throw new Error('Could not read the file(s).');
 	}
 
 	// Invoke microservice with uploaded file path for processing
 	// if (env.SERVICE_HAILGEN_ENABLED) {
 	try {
-		await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap`), {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				hailpad_id: params.id,
-				file_paths: [`${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/hailpad.stl`],
-				adaptive_block: queriedHailpad.adaptiveBlockSize,
-				adaptive_c: queriedHailpad.adaptiveC
-			})
-		});
+		if (pairAnalysis) {
+			await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap/pair`), {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					hailpad_id: params.id,
+					pre_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/pre-hailpad.stl`,
+					post_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/post-hailpad.stl`
+				})
+			});
+		} else {
+			await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap/single`), {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					hailpad_id: params.id,
+					post_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/hailpad.stl`
+				})
+			});
+		}
 	} catch (error) {
 		console.error(error);
 	}
@@ -161,8 +186,6 @@ export default function () {
 
 	const [performingAnalysis, setPerformingAnalysis] = useState<boolean>(false);
 	const [pairAnalysis, setPairAnalysis] = useState<boolean>(false);
-
-	// TODO: Redirect to depth page
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		setPerformingAnalysis(true);
@@ -188,7 +211,31 @@ export default function () {
 				>
 					<input type="hidden" name="pairAnalysis" value={pairAnalysis.toString()} />
 					<CardContent className="grid gap-2">
-						<Label htmlFor="analysis-type">Analysis Type</Label>
+						<div className="flex flex-row space-x-2 pt-2">
+							<Label htmlFor="analysis-type">Process Type</Label>
+							<Popover>
+								<PopoverTrigger>
+									<Info size={12} />
+								</PopoverTrigger>
+								<PopoverContent className="w-[420px]">
+									<div className="space-y-4">
+										<div className="flex grid-cols-2 gap-2">
+											<div className="w-fit mb-2">
+												<p className="text-lg font-semibold">About Process Type</p>
+												<CardDescription className="flex flex-col space-y-2 text-sm">
+													<span>
+														<span className="font-semibold">Single hailpad analysis</span> uses a adaptive thresholding techniques to isolate significiant, likely dent cluster regions from the comparitively shallower background. The thresholding parameters can be manually fine-tuned before performing the analysis.
+													</span>
+													<span>
+														<span className="font-semibold">Hailpad pair analysis</span> uses pre-hit and post-hit hailpad mesh pairs to separate dent shapes from the background by normalizing the depth map of the pre-hit hailpad based on the maximum depth of the post-hit hailpad and subtracting the pre-hit depth map from the post-hit depth map.
+													</span>
+												</CardDescription>
+											</div>
+										</div>
+									</div>
+								</PopoverContent>
+							</Popover>
+						</div>
 						<div id="analysis-type" className="flex flex-col text-sm">
 							<label>
 								<input
