@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs, redirect } from '@remix-run/node';
-import { useLoaderData, useNavigation } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import axios, { AxiosError } from 'axios';
 import { eq } from 'drizzle-orm';
 import { LucideLink } from 'lucide-react';
@@ -45,7 +45,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function () {
-	const navigation = useNavigation();
+	const navigate = useNavigate();
 	const path = useLoaderData<typeof loader>();
 	const [copyClicked, setCopyClicked] = useState(false);
 	const [images, setImages] = useState<File[]>([]);
@@ -77,7 +77,6 @@ export default function () {
 						'Content-Type': 'multipart/form-data'
 					},
 					onUploadProgress: (progressEvent) => {
-						console.info(progressEvent);
 						const percentCompleted = progressEvent.lengthComputable
 							? progressEvent.progress || 0 * 100
 							: 0;
@@ -88,12 +87,10 @@ export default function () {
 					}
 				});
 
-				// Status is 302, redirect to the next page
-				if (response.status === 302 && response.data.status === 'redirect') {
-					window.location.href = response.headers.Location || response.data.to;
-					return;
-				}
-
+				// Status is 200, redirect to the next page
+				if (response.status === 200 && response.data.status === 'redirect')
+					return navigate(response.headers.Location || response.data.to);
+				
 				// Unknown status
 				console.info(response);
 				return setLastResult(unknownError);
@@ -133,7 +130,7 @@ export default function () {
 				</CardHeader>
 				<form onSubmit={upload}>
 					<CardContent className="grid grid-cols-1 gap-2">
-						<fieldset className="grid gap-2" disabled={navigation.state === 'submitting'}>
+						<fieldset className="grid gap-2" disabled={uploadProgress.submitting}>
 							<Label htmlFor="images">Copy Panorama IDs to download.</Label>
 							<Button
 								variant="link"
@@ -150,10 +147,7 @@ export default function () {
 								<LucideLink size={16} /> Copy
 							</Button>
 						</fieldset>
-						<fieldset
-							className="grid gap-2"
-							disabled={navigation.state === 'submitting' || !copyClicked}
-						>
+						<fieldset className="grid gap-2" disabled={uploadProgress.submitting || !copyClicked}>
 							<Label htmlFor="images">Images</Label>
 							<Input
 								type="file"
@@ -173,10 +167,8 @@ export default function () {
 						</fieldset>
 					</CardContent>
 					<CardFooter className="space-x-4">
-						<Button type="submit" disabled={navigation.state === 'submitting' || !copyClicked}>
-							{navigation.state === 'submitting' && (
-								<Spinner className="mr-2 fill-primary" size={16} />
-							)}
+						<Button type="submit" disabled={uploadProgress.submitting || !copyClicked}>
+							{uploadProgress.submitting && <Spinner className="mr-2 fill-primary" size={16} />}
 							{uploadProgress.submitting ? `${uploadProgress.percentage.toFixed(4)}%` : 'Upload'}
 						</Button>
 						{images.length !== Object.keys(path.panoramaData as Record<string, unknown>).length && (
