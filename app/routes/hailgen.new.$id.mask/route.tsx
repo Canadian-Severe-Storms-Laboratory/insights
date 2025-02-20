@@ -20,10 +20,9 @@ import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
-
 import { useUploadStatus } from '~/lib/use-upload-status';
 
-export type UploadStatusEvent = Readonly<{
+export type UploadStatusEventMask = Readonly<{
 	id: string;
 	maxDepthLocation: number[];
 }>;
@@ -62,7 +61,7 @@ export default function () {
 	const { queriedHailpad, depthMapPath } = data;
 	const lastResult = useActionData<typeof action>();
 
-	const status = useUploadStatus<UploadStatusEvent>(queriedHailpad.id); // Used to handle redirect when service is done processing
+	const status = useUploadStatus<UploadStatusEventMask>(queriedHailpad.id); // Used to handle redirect when service is done processing
 
 	useEffect(() => {
 		if (status && status.success) {

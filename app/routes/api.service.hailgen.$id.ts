@@ -6,7 +6,8 @@ import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
 import { StatusResponseSchema } from '~/lib/service-hailgen';
 import { uploadEventBus } from '~/lib/event-bus.server';
-import { UploadStatusEvent } from './hailgen.new.$id.mask/route';
+import { UploadStatusEventMask } from './hailgen.new.$id.mask/route';
+import { UploadStatusEventDepth } from './hailgen.new.$id.depth/route';
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const id = params.id;
@@ -110,7 +111,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	// Emit an event to the status bus to notify the client of the status change
-	uploadEventBus.emit<UploadStatusEvent>({
+	uploadEventBus.emit<UploadStatusEventMask>({
+		id,
+		maxDepthLocation: data.maxDepthLocation,
+	});
+
+	uploadEventBus.emit<UploadStatusEventDepth>({
 		id,
 		maxDepthLocation: data.maxDepthLocation,
 	});

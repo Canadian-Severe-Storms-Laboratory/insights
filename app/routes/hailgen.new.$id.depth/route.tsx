@@ -3,7 +3,7 @@ import { parseWithZod } from '@conform-to/zod';
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
 import { Form, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import {
@@ -20,6 +20,12 @@ import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
+import { useUploadStatus } from '~/lib/use-upload-status';
+
+export type UploadStatusEventDepth = Readonly<{
+	id: string;
+	maxDepthLocation: number[];
+}>;
 
 // Instead of sharing a schema, prepare a schema creator
 function createSchema() {
@@ -100,31 +106,41 @@ export default function () {
 		shouldValidate: 'onSubmit',
 		shouldRevalidate: 'onSubmit'
 	});
+	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const status = useUploadStatus<UploadStatusEventDepth>(queriedHailpad.id); // Used to handle redirect when service is done processing
+
+	useEffect(() => {
+		if (status && status.success) {
+			setIsLoading(false);
+		}
+	}, [status]);
 
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	useEffect(() => {
-		const canvas = canvasRef.current;
-		if (!canvas) return;
+		if (!isLoading) {
+			const canvas = canvasRef.current;
+			if (!canvas) return;
 
-		const context = canvas.getContext('2d');
-		if (!context) return;
+			const context = canvas.getContext('2d');
+			if (!context) return;
 
-		// Get depth map image from hailpad folder
-		const depthMap = new Image();
-		depthMap.src = depthMapPath;
+			// Get depth map image from hailpad folder
+			const depthMap = new Image();
+			depthMap.src = depthMapPath;
 
-		// Draw depth map and mark max. depth
-		depthMap.onload = () => {
-			context.fillStyle = '#8F55E0'; // TODO: Use a theme color
-			context.drawImage(depthMap, 0, 0, 1000, 1000);
-			context.globalAlpha = 1;
-			context.beginPath();
-			context.arc(Number(x), Number(y), 7, 0, 2 * Math.PI);
-			context.fill();
-			context.globalAlpha = 1;
-		};
-	}, []);
+			// Draw depth map and mark max. depth
+			depthMap.onload = () => {
+				context.fillStyle = '#8F55E0'; // TODO: Use a theme color
+				context.drawImage(depthMap, 0, 0, 1000, 1000);
+				context.globalAlpha = 1;
+				context.beginPath();
+				context.arc(Number(x), Number(y), 7, 0, 2 * Math.PI);
+				context.fill();
+				context.globalAlpha = 1;
+			};
+		}
+	}, [isLoading]);
 
 	return (
 		<main className="flex h-full items-center justify-center">
@@ -137,7 +153,11 @@ export default function () {
 					</CardDescription>
 				</CardHeader>
 				<div className="flex flex-col gap-4">
-					<canvas ref={canvasRef} width={1000} height={1000} />
+					{isLoading ?
+						<div>Creating depth map...</div>
+						:
+						<canvas ref={canvasRef} width={1000} height={1000} />
+					}
 					<FormProvider context={form.context}>
 						<Form method="post" id={form.id} onSubmit={form.onSubmit}>
 							<CardContent className="flex flex-row items-center gap-4">
@@ -153,7 +173,7 @@ export default function () {
 								</div>
 							</CardContent>
 							<CardFooter>
-								<Button type="submit">Finish</Button>
+								<Button type="submit">Run analysis and finish</Button>
 							</CardFooter>
 						</Form>
 					</FormProvider>
