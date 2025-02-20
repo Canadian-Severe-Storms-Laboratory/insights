@@ -149,14 +149,14 @@ export default function () {
 												<p className="text-lg font-semibold">About Process Type</p>
 												<CardDescription className="flex flex-col space-y-2 text-sm">
 													<span>
-														<span className="font-semibold">Single hailpad analysis</span> uses a
+														<span className="font-semibold">Single hailpad processing</span> uses a
 														adaptive thresholding techniques to isolate significiant, likely dent
 														cluster regions from the comparitively shallower background. The
 														thresholding parameters can be manually fine-tuned before performing the
 														analysis.
 													</span>
 													<span>
-														<span className="font-semibold">Hailpad pair analysis</span> uses
+														<span className="font-semibold">Hailpad pair processing</span> uses
 														pre-hit and post-hit hailpad mesh pairs to separate dent shapes from the
 														background by normalizing the depth map of the pre-hit hailpad based on
 														the maximum depth of the post-hit hailpad and subtracting the pre-hit

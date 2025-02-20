@@ -5,6 +5,8 @@ import { dent, hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
 import { StatusResponseSchema } from '~/lib/service-hailgen';
+import { uploadEventBus } from '~/lib/event-bus.server';
+import { UploadStatusEvent } from './hailgen.new.$id.mask/route';
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const id = params.id;
@@ -86,25 +88,31 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		maxDepth: string;
 	}
 
-	const dents = data.dents;
+	if (data.dents) {
+		data.dents.forEach(async (hailpadDent: HailpadDent) => {
+			const newDent = await db
+				.insert(dent)
+				.values({
+					hailpadId: id,
+					angle: hailpadDent.angle,
+					majorAxis: hailpadDent.majorAxis,
+					minorAxis: hailpadDent.minorAxis,
+					maxDepth: hailpadDent.maxDepth,
+					centroidX: hailpadDent.centroidX,
+					centroidY: hailpadDent.centroidY
+				})
+				.returning();
 
-	dents.forEach(async (hailpadDent: HailpadDent) => {
-		const newDent = await db
-			.insert(dent)
-			.values({
-				hailpadId: id,
-				angle: hailpadDent.angle,
-				majorAxis: hailpadDent.majorAxis,
-				minorAxis: hailpadDent.minorAxis,
-				maxDepth: hailpadDent.maxDepth,
-				centroidX: hailpadDent.centroidX,
-				centroidY: hailpadDent.centroidY
-			})
-			.returning();
+			if (newDent.length != 1) {
+				throw new Error('Error creating dent');
+			}
+		});
+	}
 
-		if (newDent.length != 1) {
-			throw new Error('Error creating dent');
-		}
+	// Emit an event to the status bus to notify the client of the status change
+	uploadEventBus.emit<UploadStatusEvent>({
+		id,
+		maxDepthLocation: data.maxDepthLocation,
 	});
 
 	// if (update.rowCount !== 1) return new Response(null, { status: 404 });

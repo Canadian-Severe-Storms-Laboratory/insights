@@ -47,7 +47,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	// Invoke microservice with uploaded file path for processing
-	if (env.SERVICE_HAILGEN_ENABLED) {
+	// if (env.SERVICE_HAILGEN_ENABLED) {
 		try {
 			if (pairAnalysis) {
 				await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap/pair`), {
@@ -61,6 +61,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						post_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/post-hailpad.stl`
 					})
 				});
+
+				return buildUploadResponse({
+					status: 'redirect',
+					data: `/hailgen/new/${params.id}/depth`
+				});
 			} else {
 				await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap/single`), {
 					method: 'POST',
@@ -69,8 +74,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					},
 					body: JSON.stringify({
 						hailpad_id: params.id,
-						post_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/hailpad.stl`
+						post_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/post-hailpad.stl`
 					})
+				});
+
+				return buildUploadResponse({
+					status: 'redirect',
+					data: `/hailgen/new/${params.id}/mask`
 				});
 			}
 		} catch (error) {
@@ -78,14 +88,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return buildUploadResponse({
 				status: 'error',
 				data: {
-					message: 'Failed to process the uploaded files. Check that the Hailgen is running!'
+					message: 'Failed to process the uploaded file(s).'
 				}
 			});
 		}
-	}
-
-	return buildUploadResponse({
-		status: 'redirect',
-		data: `/hailgen/new/${params.id}/depth`
-	});
+	// }
 }
