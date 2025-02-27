@@ -176,12 +176,18 @@ export default function () {
 										name={fields.depth.name}
 										// defaultValue={fields.depth.initialValue}
 										placeholder="Maximum Depth"
+										disabled={isLoading}
 									/>
 									<p className="text-sm text-primary/60">{fields.depth.errors}</p>
 								</div>
 							</CardContent>
 							<CardFooter>
-								<Button type="submit">Perform model analysis and finish</Button>
+								<Button
+									type="submit"
+									disabled={isLoading}
+								>
+									Perform model analysis and finish
+								</Button>
 							</CardFooter>
 						</Form>
 					</FormProvider>
