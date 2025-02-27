@@ -5,6 +5,7 @@ import { Form, useActionData, useLoaderData, useNavigation } from '@remix-run/re
 import { eq } from 'drizzle-orm';
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
+import LoadingIndicator from '~/components/ui/loading-indicator';
 import { Button } from '~/components/ui/button';
 import {
 	Card,
@@ -57,9 +58,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return json({
 		queriedHailpad,
-		depthMapPath,
-		x: url.searchParams.get('x'),
-		y: url.searchParams.get('y')
+		depthMapPath
 	});
 }
 
@@ -99,7 +98,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function () {
 	const navigation = useNavigation();
 	const data = useLoaderData<typeof loader>();
-	const { queriedHailpad, depthMapPath, x, y } = data;
+	const { queriedHailpad, depthMapPath } = data;
 	const lastResult = useActionData<typeof action>();
 	const [form, fields] = useForm({
 		lastResult,
@@ -107,11 +106,16 @@ export default function () {
 		shouldRevalidate: 'onSubmit'
 	});
 	const [isLoading, setIsLoading] = useState<boolean>(true);
-	const status = useUploadStatus<UploadStatusEventDepth>(queriedHailpad.id); // Used to handle redirect when service is done processing
+	const [depthX, setDepthX] = useState<number>(0);
+	const [depthY, setDepthY] = useState<number>(0);
+	const status = useUploadStatus<UploadStatusEventDepth>(queriedHailpad.id); // Used to handle depth map loading when service is done processing
+
 
 	useEffect(() => {
 		if (status && status.success) {
 			setIsLoading(false);
+			setDepthX(Number(status.event?.maxDepthLocation[0]));
+			setDepthY(Number(status.event?.maxDepthLocation[1]));
 		}
 	}, [status]);
 
@@ -135,7 +139,7 @@ export default function () {
 				context.drawImage(depthMap, 0, 0, 1000, 1000);
 				context.globalAlpha = 1;
 				context.beginPath();
-				context.arc(Number(x), Number(y), 7, 0, 2 * Math.PI);
+				context.arc(depthX, depthY, 7, 0, 2 * Math.PI);
 				context.fill();
 				context.globalAlpha = 1;
 			};
@@ -152,12 +156,16 @@ export default function () {
 						of the hailpad. Enter the mm measurement of this depth.
 					</CardDescription>
 				</CardHeader>
-				<div className="flex flex-col gap-4">
+				<CardContent>
 					{isLoading ?
-						<div>Creating depth map...</div>
+						<div className="flex flex-row justify-center opacity-70 bg-gray-500 bg-opacity-5 p-16 w-full border-[1px] border-black-900 rounded-md">
+							<LoadingIndicator message={"Preparing depth map..."} />
+						</div>
 						:
 						<canvas ref={canvasRef} width={1000} height={1000} />
 					}
+				</CardContent>
+				<div className="flex flex-col gap-4">
 					<FormProvider context={form.context}>
 						<Form method="post" id={form.id} onSubmit={form.onSubmit}>
 							<CardContent className="flex flex-row items-center gap-4">
@@ -173,7 +181,7 @@ export default function () {
 								</div>
 							</CardContent>
 							<CardFooter>
-								<Button type="submit">Run analysis and finish</Button>
+								<Button type="submit">Perform model analysis and finish</Button>
 							</CardFooter>
 						</Form>
 					</FormProvider>

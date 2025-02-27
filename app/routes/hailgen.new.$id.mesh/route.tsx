@@ -151,7 +151,7 @@ export default function () {
 													<span>
 														<span className="font-semibold">Single hailpad processing</span> uses a
 														adaptive thresholding techniques to isolate significiant, likely dent
-														cluster regions from the comparitively shallower background. The
+														cluster regions from the comparatively shallower background. The
 														thresholding parameters can be manually fine-tuned before performing the
 														analysis.
 													</span>
