@@ -186,7 +186,7 @@ export default function () {
 									type="submit"
 									disabled={isLoading}
 								>
-									Perform model analysis and finish
+									Finish
 								</Button>
 							</CardFooter>
 						</Form>
