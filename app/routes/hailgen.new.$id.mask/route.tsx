@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { Form, useLoaderData } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
 import { useEffect, useRef, useState } from 'react';
 import LoadingIndicator from '~/components/ui/loading-indicator';
@@ -15,6 +15,7 @@ import { hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
 import { useUploadStatus } from '~/lib/use-upload-status';
+import { buildUploadResponse } from '~/lib/upload-util.server';
 import { Label } from '~/components/ui/label';
 import { Slider } from '~/components/ui/slider';
 import { Button } from '~/components/ui/button';
@@ -52,6 +53,39 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
+	if (!params.id) {
+		return buildUploadResponse({
+			status: 'redirect',
+			data: '/hailgen'
+		});
+	}
+
+	const queriedHailpad = await db.query.hailpad.findFirst({
+		where: eq(hailpad.id, params.id)
+	});
+
+	if (!queriedHailpad) {
+		return buildUploadResponse({
+			status: 'error',
+			data: { message: 'Hailpad not found' }
+		});
+	}
+
+	const formData = await request.formData();
+	const mask = formData.get('mask');
+
+	await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/analysis`), {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			hailpad_id: params.id,
+			dmap_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/hailpad.png`,
+			bin_mask: mask
+		})
+	});
+
 	return redirect(`/hailgen/${params.id}`);
 }
 
@@ -66,6 +100,7 @@ export default function () {
 	const [areaSliderValue, setAreaSliderValue] = useState<number>(0);
 	const [isErodeDilate, setIsErodeDilate] = useState<boolean>(false);
 	const [isRemoveEdges, setIsRemoveEdges] = useState<boolean>(false);
+	const [imageData, setImageData] = useState<string>("");
 
 	// TODO: Implement more robust saga pattern
 	const status = useUploadStatus<UploadStatusEventMask>(queriedHailpad.id); // Used to handle depth map loading when service is done processing
@@ -120,6 +155,7 @@ export default function () {
 		};
 	}
 
+	// TODO: Move to server? TBD
 	const performAdaptiveThreshold = () => {
 		if (!canvasRef.current) return;
 		const canvas = canvasRef.current;
@@ -206,6 +242,7 @@ export default function () {
 
 			cv.resize(dst, dst, new cv.Size(CANVAS_WIDTH, CANVAS_HEIGHT), 0, 0, cv.INTER_AREA);
 			cv.imshow(canvas, dst);
+			setImageData(canvas.toDataURL("image/png"));
 
 			dst.delete();
 			mask.delete();
@@ -326,7 +363,7 @@ export default function () {
 										htmlFor="remove-edge"
 										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 									>
-										Remove Edges
+										Remove Edges (Experimental)
 									</Label>
 								</div>
 								<div className="flex flex-row items-center space-x-2 mt-2">
@@ -344,11 +381,15 @@ export default function () {
 								</div>
 							</div>
 							<div className="flex flex-row">
-								{<Button
-									type="submit"
-								>
-									Perform Analysis and Continue
-								</Button>}
+								<Form method="post">
+									<input type="hidden" name="mask" value={imageData} />
+									<Button
+										type="submit"
+										disabled={imageData === ""}
+									>
+										Perform Analysis and Continue
+									</Button>
+								</Form>
 							</div>
 						</div>
 					</div>
