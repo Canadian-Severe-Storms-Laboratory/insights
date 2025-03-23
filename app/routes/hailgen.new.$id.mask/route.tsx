@@ -98,6 +98,7 @@ export default function () {
 	const [adaptiveCSliderValue, setAdaptiveCSliderValue] = useState<number>(0);
 	const [globalSliderValue, setGlobalSliderValue] = useState<number>(0);
 	const [areaSliderValue, setAreaSliderValue] = useState<number>(0);
+	const [isCLAHE, setIsCLAHE] = useState<boolean>(false);
 	const [isErodeDilate, setIsErodeDilate] = useState<boolean>(false);
 	const [isRemoveEdges, setIsRemoveEdges] = useState<boolean>(false);
 	const [imageData, setImageData] = useState<string>("");
@@ -138,7 +139,7 @@ export default function () {
 
 	useEffect(() => {
 		performAdaptiveThreshold();
-	}, [adaptiveBlockSliderValue, adaptiveCSliderValue, globalSliderValue, areaSliderValue, isRemoveEdges, isErodeDilate]);
+	}, [adaptiveBlockSliderValue, adaptiveCSliderValue, globalSliderValue, areaSliderValue, isRemoveEdges, isCLAHE, isErodeDilate]);
 
 	const loadDepthMap = () => {
 		depthMap = new Image();
@@ -177,9 +178,23 @@ export default function () {
 
 			cv.bitwise_and(mask, depthMapImage, dst);
 
+			if (isCLAHE) {
+				let clahe = new cv.CLAHE(10.0, new cv.Size(8, 8));
+				clahe.apply(dst, dst);
+			}
+
 			cv.adaptiveThreshold(
 				dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, adaptiveBlockSliderValue, adaptiveCSliderValue
 			);
+
+			if (isErodeDilate) {
+				let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(4, 4));
+
+				cv.erode(dst, dst, kernel, { x: -1, y: -1 }, 1);
+				cv.dilate(dst, dst, kernel, { x: -1, y: -1 }, 1);
+
+				kernel.delete();
+			}
 
 			if (areaSliderValue > 0) {
 				let contours = new cv.MatVector();
@@ -198,15 +213,6 @@ export default function () {
 
 				contours.delete();
 				hierarchy.delete();
-			}
-
-			if (isErodeDilate) {
-				let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(4, 4));
-
-				cv.erode(dst, dst, kernel, { x: -1, y: -1 }, 1);
-				cv.dilate(dst, dst, kernel, { x: -1, y: -1 }, 1);
-
-				kernel.delete();
 			}
 
 			if (isRemoveEdges) {
@@ -364,6 +370,19 @@ export default function () {
 										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 									>
 										Remove Edges (Experimental)
+									</Label>
+								</div>
+								<div className="flex flex-row items-center space-x-2 mt-2">
+									<Checkbox
+										id="clahe"
+										checked={isCLAHE}
+										onClick={() => setIsCLAHE(!isCLAHE)}
+									/>
+									<Label
+										htmlFor="clahe"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+									>
+										Enhance Local Contrast (CLAHE)
 									</Label>
 								</div>
 								<div className="flex flex-row items-center space-x-2 mt-2">
