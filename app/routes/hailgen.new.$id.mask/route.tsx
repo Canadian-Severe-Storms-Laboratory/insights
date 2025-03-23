@@ -21,8 +21,9 @@ import { Slider } from '~/components/ui/slider';
 import { Button } from '~/components/ui/button';
 import cv from "@techstark/opencv-js";
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
-import { Info } from 'lucide-react';
+import { Info, ScanLine } from 'lucide-react';
 import { Checkbox } from '~/components/ui/checkbox';
+import { Input } from '~/components/ui/input';
 
 export type UploadStatusEventMask = Readonly<{
 	id: string;
@@ -97,8 +98,11 @@ export default function () {
 	const [adaptiveBlockSliderValue, setAdaptiveBlockSliderValue] = useState<number>(17);
 	const [adaptiveCSliderValue, setAdaptiveCSliderValue] = useState<number>(0);
 	const [globalSliderValue, setGlobalSliderValue] = useState<number>(0);
-	const [areaSliderValue, setAreaSliderValue] = useState<number>(0);
+	const [minArea, setMinArea] = useState<number>(0);
+	const [maxArea, setMaxArea] = useState<number>(5000);
 	const [isCLAHE, setIsCLAHE] = useState<boolean>(false);
+	const [clipLimitSliderValue, setClipLimitSliderValue] = useState<number>(10);
+	const [tileGridSizeSliderValue, setTileGridSizeSliderValue] = useState<number>(8);
 	const [isErodeDilate, setIsErodeDilate] = useState<boolean>(false);
 	const [isRemoveEdges, setIsRemoveEdges] = useState<boolean>(false);
 	const [imageData, setImageData] = useState<string>("");
@@ -139,7 +143,18 @@ export default function () {
 
 	useEffect(() => {
 		performAdaptiveThreshold();
-	}, [adaptiveBlockSliderValue, adaptiveCSliderValue, globalSliderValue, areaSliderValue, isRemoveEdges, isCLAHE, isErodeDilate]);
+	}, [
+		adaptiveBlockSliderValue,
+		adaptiveCSliderValue,
+		globalSliderValue,
+		minArea,
+		maxArea,
+		isRemoveEdges,
+		isCLAHE,
+		clipLimitSliderValue,
+		tileGridSizeSliderValue,
+		isErodeDilate,
+	]);
 
 	const loadDepthMap = () => {
 		depthMap = new Image();
@@ -179,7 +194,7 @@ export default function () {
 			cv.bitwise_and(mask, depthMapImage, dst);
 
 			if (isCLAHE) {
-				let clahe = new cv.CLAHE(10.0, new cv.Size(8, 8));
+				let clahe = new cv.CLAHE(clipLimitSliderValue, new cv.Size(tileGridSizeSliderValue, tileGridSizeSliderValue));
 				clahe.apply(dst, dst);
 			}
 
@@ -196,7 +211,7 @@ export default function () {
 				kernel.delete();
 			}
 
-			if (areaSliderValue > 0) {
+			if ((minArea > 0 || maxArea > 0) && maxArea > minArea) {
 				let contours = new cv.MatVector();
 				let hierarchy = new cv.Mat();
 
@@ -205,7 +220,7 @@ export default function () {
 					let cnt = contours.get(i);
 					let area = cv.contourArea(cnt, false);
 
-					if (area < areaSliderValue) {
+					if (area < minArea || area > maxArea) {
 						cv.drawContours(dst, contours, i, new cv.Scalar(0, 0, 0, 0), -1);
 					}
 					cnt.delete();
@@ -276,7 +291,7 @@ export default function () {
 							}
 						</div>
 						<div className="flex flex-col justify-between">
-							<div>
+							<div className="overflow-y-scroll p-4 pr-8 rounded-md h-[444px] bg-gray-500 bg-opacity-5 border-[1px] border-black-900">
 								<div className="flex flex-row gap-2 mb-4">
 									<p className="text-lg font-semibold ">Adaptive Thresholding</p>
 									<Popover>
@@ -331,47 +346,7 @@ export default function () {
 									value={[adaptiveCSliderValue]}
 									onValueChange={(value: number[]) => setAdaptiveCSliderValue(value[0])}
 								/>
-								<p className="text-lg font-semibold mt-8 mb-4">Global Depth Filtering</p>
-								<div className="mb-1 mt-4 flex flex-row justify-between">
-									<Label>
-										Threshold Value
-									</Label>
-									<CardDescription>{globalSliderValue}</CardDescription>
-								</div>
-								<Slider
-									min={0}
-									max={255}
-									step={1}
-									value={[globalSliderValue]}
-									onValueChange={(value: number[]) => setGlobalSliderValue(value[0])}
-								/>
-								<p className="text-lg font-semibold mt-8 mb-4">Other Adjustments</p>
-								<div className="mb-1 mt-4 flex flex-row justify-between">
-									<Label>
-										Minimum Area
-									</Label>
-									<CardDescription>{areaSliderValue}</CardDescription>
-								</div>
-								<Slider
-									min={0}
-									max={50}
-									step={1}
-									value={[areaSliderValue]}
-									onValueChange={(value: number[]) => setAreaSliderValue(value[0])}
-								/>
-								<div className="flex flex-row items-center space-x-2 mt-6">
-									<Checkbox
-										id="remove-edge"
-										checked={isRemoveEdges}
-										onClick={() => setIsRemoveEdges(!isRemoveEdges)}
-									/>
-									<Label
-										htmlFor="remove-edge"
-										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-									>
-										Remove Edges (Experimental)
-									</Label>
-								</div>
+								<p className="text-lg font-semibold mt-8 mb-4">Local Contrast Enhancement</p>
 								<div className="flex flex-row items-center space-x-2 mt-2">
 									<Checkbox
 										id="clahe"
@@ -382,10 +357,104 @@ export default function () {
 										htmlFor="clahe"
 										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 									>
-										Enhance Local Contrast (CLAHE)
+										Enable CLAHE
 									</Label>
+									<Popover>
+										<PopoverTrigger>
+											<Info size={12} />
+										</PopoverTrigger>
+										<PopoverContent className="w-[300px]">
+											<div className="space-y-4">
+												<div className="flex grid-cols-2 gap-2">
+													<div className="mb-2 w-fit">
+														<p className="text-lg font-semibold">About CLAHE</p>
+														<CardDescription className="flex flex-col space-y-2 text-sm">
+															TODO
+														</CardDescription>
+													</div>
+												</div>
+											</div>
+										</PopoverContent>
+									</Popover>
 								</div>
-								<div className="flex flex-row items-center space-x-2 mt-2">
+								<div className={`${!isCLAHE ? "opacity-40" : ""} mb-1 mt-4 flex flex-row justify-between`}>
+									<Label>
+										Clip Limit
+									</Label>
+									<CardDescription>{clipLimitSliderValue}</CardDescription>
+								</div>
+								<Slider
+									min={1}
+									max={10}
+									step={1}
+									value={[clipLimitSliderValue]}
+									onValueChange={(value: number[]) => setClipLimitSliderValue(value[0])}
+									disabled={!isCLAHE}
+									className={`${!isCLAHE ? "opacity-40" : ""}`}
+								/>
+								<div className={`${!isCLAHE ? "opacity-40" : ""} mb-1 mt-4 flex flex-row justify-between`}>
+									<Label>
+										Tile Grid Size
+									</Label>
+									<CardDescription>{tileGridSizeSliderValue}x{tileGridSizeSliderValue}</CardDescription>
+								</div>
+								<Slider
+									min={1}
+									max={10}
+									step={1}
+									value={[tileGridSizeSliderValue]}
+									onValueChange={(value: number[]) => setTileGridSizeSliderValue(value[0])}
+									disabled={!isCLAHE}
+									className={`${!isCLAHE ? "opacity-40" : ""}`}
+								/>
+								<p className="text-lg font-semibold mt-8 mb-4">Other Adjustments</p>
+								<div className="flex flex-row justify-between items-center">
+									<div>
+										<Input
+											className="h-8 w-20"
+											type="number"
+											defaultValue={minArea}
+											value={minArea}
+											step={1}
+											min={0}
+											onChange={(e) => setMinArea(Number(e.target.value))}
+										/>
+									</div>
+									<Label>
+										≤
+									</Label>
+									<Label>
+										Area
+									</Label>
+									<Label>
+										≤
+									</Label>
+									<div>
+										<Input
+											className="h-8 w-20"
+											type="number"
+											defaultValue={maxArea}
+											value={maxArea}
+											step={1}
+											min={0}
+											onChange={(e) => setMaxArea(Number(e.target.value))}
+										/>
+									</div>
+								</div>
+								<div className="mb-1 mt-4 flex flex-row justify-between">
+									<Label>
+										Global Threshold Value
+									</Label>
+									<CardDescription>{globalSliderValue}</CardDescription>
+								</div>
+								<Slider
+									min={0}
+									max={255}
+									step={1}
+									value={[globalSliderValue]}
+									onValueChange={(value: number[]) => setGlobalSliderValue(value[0])}
+								/>
+								<div className="flex flex-row items-center space-x-2 mt-6">
 									<Checkbox
 										id="erode-dilate"
 										checked={isErodeDilate}
@@ -398,15 +467,30 @@ export default function () {
 										Erode and Dilate
 									</Label>
 								</div>
+								<div className="flex flex-row items-center space-x-2 mt-2">
+									<Checkbox
+										id="remove-edge"
+										checked={isRemoveEdges}
+										onClick={() => setIsRemoveEdges(!isRemoveEdges)}
+									/>
+									<Label
+										htmlFor="remove-edge"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+									>
+										Remove Edges (Experimental)
+									</Label>
+								</div>
 							</div>
-							<div className="flex flex-row">
-								<Form method="post">
+							<div className="flex flex-row w-full">
+								<Form method="post" className="w-full">
 									<input type="hidden" name="mask" value={imageData} />
 									<Button
 										type="submit"
+										className="flex flex-row w-full justify-between"
 										disabled={imageData === ""}
 									>
 										Perform Analysis and Continue
+										<ScanLine className="h-4 w-4" />
 									</Button>
 								</Form>
 							</div>
