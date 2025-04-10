@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
 import { Form, useLoaderData } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
@@ -74,6 +75,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const formData = await request.formData();
 	const mask = formData.get('mask');
+	const maskPath = `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/mask.png`;
+
+	const base64Data = (mask as string).replace(/^data:image\/png;base64,/, '');
+	const buffer = Buffer.from(base64Data, 'base64');
+	await fs.promises.writeFile(maskPath, buffer);
 
 	await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/analysis`), {
 		method: 'POST',
@@ -82,8 +88,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		},
 		body: JSON.stringify({
 			hailpad_id: params.id,
-			dmap_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/hailpad.png`,
-			bin_mask: mask
+			dmap_path: `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/dmap.png`,
+			mask_path: maskPath
 		})
 	});
 

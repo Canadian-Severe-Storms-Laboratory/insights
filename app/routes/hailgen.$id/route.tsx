@@ -61,8 +61,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	const depthMapPath = `${env.BASE_URL}/${env.PUBLIC_HAILPAD_DIRECTORY}/${queriedHailpad.folderName}/dmap.png`;
 	const boxfit = queriedHailpad.boxfit;
 	const maxDepth = queriedHailpad.maxDepth;
-	const adaptiveBlockSize = queriedHailpad.adaptiveBlockSize;
-	const adaptiveC = queriedHailpad.adaptiveC;
 	const hailpadId = queriedHailpad.id;
 	const hailpadName = queriedHailpad.name;
 
@@ -72,8 +70,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		depthMapPath,
 		boxfit,
 		maxDepth,
-		adaptiveBlockSize,
-		adaptiveC,
 		hailpadId,
 		hailpadName
 	});
@@ -89,11 +85,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// Measurement calibration fields
 	const boxfit = formData.get('boxfit');
 	const maxDepth = formData.get('maxDepth');
-
-	// Thresholding fields
-	const adaptiveBlock = formData.get('adaptiveBlock');
-	const adaptiveC = formData.get('adaptiveC');
-	let analysisStatus;
 
 	// Dent management fields
 	const dentID = formData.get('dentID');
@@ -126,62 +117,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				updatedAt: new Date()
 			})
 			.where(eq(hailpad.id, params.id));
-	} else if (adaptiveBlock && adaptiveC) {
-		// TODO: Create status change and show in UI
-
-		// Update hailpad with new adaptive block size and adaptive C-value
-		await db
-			.update(hailpad)
-			.set({
-				adaptiveBlockSize: adaptiveBlock.toString(),
-				adaptiveC: adaptiveC.toString(),
-				updatedBy: userId,
-				updatedAt: new Date()
-			})
-			.where(eq(hailpad.id, params.id));
-
-		// Delete existing dents
-		await db.delete(dent).where(eq(dent.hailpadId, params.id));
-
-		// Get hailpad
-		const queriedHailpad = await db.query.hailpad.findFirst({
-			where: eq(hailpad.id, params.id)
-		});
-
-		if (!queriedHailpad) return;
-
-		const filePath = `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}`;
-
-		// Invoke microservice with uploaded file path for processing
-		// if (env.SERVICE_HAILGEN_ENABLED) {
-		analysisStatus = true;
-		try {
-			await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap`), {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					hailpad_id: params.id,
-					file_paths: [`${filePath}/hailpad.stl`],
-					adaptive_block: queriedHailpad.adaptiveBlockSize,
-					adaptive_c: queriedHailpad.adaptiveC
-				})
-			});
-		} catch (error) {
-			console.error(error);
-		}
-
-		await db
-			.update(hailpad)
-			.set({
-				updatedBy: userId,
-				updatedAt: new Date()
-			})
-			.where(eq(hailpad.id, params.id));
-		// } else {
-		// 	console.log('Hailgen service is disabled');
-		// } // TODO: Uncomment
 	} else if (deleteDentID) {
 		await db.delete(dent).where(eq(dent.hailpadId, params.id) && eq(dent.id, String(deleteDentID)));
 
@@ -231,10 +166,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 			.where(eq(hailpad.id, params.id));
 	}
-
-	if (!analysisStatus) analysisStatus = false;
-
-	return { analysisStatus };
 }
 
 export default function () {
@@ -244,6 +175,7 @@ export default function () {
 	const [authenticated, setAuthenticated] = useState<boolean>(false);
 	const [currentIndex, setCurrentIndex] = useState<number>(0);
 	const [showCentroids, setShowCentroids] = useState<boolean>(false);
+	const [showFittedEllipses, setShowFittedEllipses] = useState<boolean>(false);
 	const [download, setDownload] = useState<boolean>(false);
 	const [dentData, setDentData] = useState<HailpadDent[]>([]);
 	const [filters, setFilters] = useState<{
@@ -258,12 +190,7 @@ export default function () {
 		maxMajor: Infinity
 	});
 
-	const { userId, dents, depthMapPath, boxfit, maxDepth, adaptiveBlockSize, adaptiveC, hailpadName, hailpadId } = data;
-	const [performingAnalysis, setPerformingAnalysis] = useState<boolean>(actionData?.analysisStatus || false);
-
-	useEffect(() => {
-		setPerformingAnalysis(actionData?.analysisStatus || false);
-	}, [actionData])
+	const { userId, dents, depthMapPath, boxfit, maxDepth, hailpadName, hailpadId } = data;
 
 	useEffect(() => {
 		if (userId) setAuthenticated(true);
@@ -346,6 +273,7 @@ export default function () {
 							dentData={dentData}
 							depthMapPath={depthMapPath}
 							showCentroids={showCentroids}
+							showFittedEllipses={showFittedEllipses}
 							onIndexChange={setCurrentIndex}
 						/>
 					</Suspense>
@@ -357,11 +285,9 @@ export default function () {
 					dentData={dentData}
 					boxfit={boxfit}
 					maxDepth={maxDepth}
-					adaptiveBlockSize={adaptiveBlockSize}
-					adaptiveC={adaptiveC}
-					performingAnalysis={performingAnalysis}
 					onFilterChange={setFilters}
 					onShowCentroids={setShowCentroids}
+					onShowFittedEllipses={setShowFittedEllipses}
 					onDownload={setDownload}
 				/>
 			</div>

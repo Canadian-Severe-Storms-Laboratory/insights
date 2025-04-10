@@ -143,8 +143,6 @@ export const hailpad = pgTable('hailpad', {
 	folderName: text('folder_name').unique().notNull(),
 	boxfit: decimal('boxfit').notNull(),
 	maxDepth: decimal('max_depth').notNull(),
-	adaptiveBlockSize: decimal('adaptive_block_size').notNull(),
-	adaptiveC: decimal('adaptive_c').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()

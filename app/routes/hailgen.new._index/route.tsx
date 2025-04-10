@@ -109,8 +109,6 @@ export async function action({ request }: ActionFunctionArgs) {
 			folderName,
 			boxfit: Number(boxfit).toString(),
 			maxDepth: Number(0).toString(), // Default value
-			adaptiveBlockSize: Number(21).toString(), // Default value
-			adaptiveC: Number(-4.0).toString(), // Default value
 			createdBy: userId,
 			updatedBy: userId
 		})
