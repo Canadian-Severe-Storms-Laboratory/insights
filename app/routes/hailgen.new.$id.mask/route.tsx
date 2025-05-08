@@ -74,6 +74,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const formData = await request.formData();
+	
+	const depthX = formData.get('depthX');
+    const depthY = formData.get('depthY');
+	
 	const mask = formData.get('mask');
 	const maskPath = `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}/mask.png`;
 
@@ -93,7 +97,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 	});
 
-	return redirect(`/hailgen/${params.id}`);
+	return redirect(`/hailgen/new/${params.id}/depth?depthX=${depthX}&depthY=${depthY}`);
 }
 
 export default function () {
@@ -112,8 +116,9 @@ export default function () {
 	const [isErodeDilate, setIsErodeDilate] = useState<boolean>(false);
 	const [isRemoveEdges, setIsRemoveEdges] = useState<boolean>(false);
 	const [imageData, setImageData] = useState<string>("");
+	const [depthX, setDepthX] = useState<number>(0);
+	const [depthY, setDepthY] = useState<number>(0);
 
-	// TODO: Implement more robust saga pattern
 	const status = useUploadStatus<UploadStatusEventMask>(queriedHailpad.id); // Used to handle depth map loading when service is done processing
 
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -135,6 +140,8 @@ export default function () {
 		(async () => {
 			if ((status && status.success) || await imageExists(depthMapPath)) {
 				setIsLoading(false);
+				setDepthX(Number(status?.event?.maxDepthLocation[0]));
+				setDepthY(Number(status?.event?.maxDepthLocation[1]));
 				performAdaptiveThreshold();
 			}
 		})();
@@ -142,7 +149,6 @@ export default function () {
 
 	useEffect(() => {
 		if (!isLoading) {
-			// loadDepthMap(); // TODO: TBD
 			performAdaptiveThreshold();
 		}
 	}, [isLoading]);
@@ -162,22 +168,6 @@ export default function () {
 		isErodeDilate,
 	]);
 
-	const loadDepthMap = () => {
-		depthMap = new Image();
-		depthMap.src = depthMapPath;
-
-		depthMap.onload = () => {
-			if (!canvasRef.current) return;
-			const canvas = canvasRef.current;
-
-			const context = canvas.getContext("2d");
-			if (!context) return;
-
-			context.drawImage(depthMap, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-		};
-	}
-
-	// TODO: Move to server? TBD
 	const performAdaptiveThreshold = () => {
 		if (!canvasRef.current) return;
 		const canvas = canvasRef.current;
@@ -186,6 +176,7 @@ export default function () {
 		if (!context) return;
 
 		depthMap = new Image();
+		depthMap.crossOrigin = "anonymous"; // TODO: Retained for local testing purposes
 		depthMap.src = depthMapPath;
 
 		depthMap.onload = () => {
@@ -419,7 +410,6 @@ export default function () {
 										<Input
 											className="h-8 w-20"
 											type="number"
-											defaultValue={minArea}
 											value={minArea}
 											step={1}
 											min={0}
@@ -439,7 +429,6 @@ export default function () {
 										<Input
 											className="h-8 w-20"
 											type="number"
-											defaultValue={maxArea}
 											value={maxArea}
 											step={1}
 											min={0}
@@ -478,10 +467,11 @@ export default function () {
 										id="remove-edge"
 										checked={isRemoveEdges}
 										onClick={() => setIsRemoveEdges(!isRemoveEdges)}
+										disabled={true}
 									/>
 									<Label
 										htmlFor="remove-edge"
-										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										className="opacity-50 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 									>
 										Remove Edges (Experimental)
 									</Label>
@@ -490,6 +480,8 @@ export default function () {
 							<div className="flex flex-row w-full">
 								<Form method="post" className="w-full">
 									<input type="hidden" name="mask" value={imageData} />
+									<input type="hidden" name="depthX" value={depthX} />
+									<input type="hidden" name="depthY" value={depthY} />
 									<Button
 										type="submit"
 										className="flex flex-row w-full justify-between"

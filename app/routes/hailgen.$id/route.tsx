@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx-js-style';
 import { ActionFunctionArgs, LoaderFunctionArgs, createCookieSessionStorage, json } from '@remix-run/node';
 import { useActionData, useLoaderData } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
@@ -166,6 +167,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 			.where(eq(hailpad.id, params.id));
 	}
+	return null;
 }
 
 export default function () {
@@ -228,24 +230,76 @@ export default function () {
 	useEffect(() => {
 		if (download) {
 			setDownload(false);
-
-			// Prepare dent data for CSV
-			const headers = ['Minor Axis (mm)', 'Major Axis (mm)'];
-			const csvData = dentData.map((dent) => {
-				return `${dent.minorAxis},${dent.majorAxis}`;
+	
+			const wb = XLSX.utils.book_new();
+			const ws = XLSX.utils.aoa_to_sheet([]);
+	
+			const headerStyle = {
+				font: { bold: true },
+				alignment: { horizontal: 'center' },
+				fill: { fgColor: { rgb: "BFBFBF" } }
+			};
+	
+			// --- Dent data table ---
+			XLSX.utils.sheet_add_aoa(ws, [
+				['Dent #', 'Minor Axis (mm)', 'Major Axis (mm)', 'Max. Depth (mm)', 'Centroid (x, y)', 'Angle (rad)']
+			], { origin: 'A1' });
+	
+			['A1', 'B1', 'C1', 'D1', 'E1', 'F1'].forEach(cell => {
+				if (!ws[cell]) ws[cell] = {};
+				ws[cell].s = headerStyle;
 			});
-
-			// Prepend headers to CSV data
-			csvData.unshift(headers.join(','));
-			const csv = csvData.join('\n');
-			const blob = new Blob([csv], { type: 'text/csv' });
-
-			// Download CSV
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `${hailpadName}.csv`;
-			a.click();
+	
+			const dentRows = dents.map((dent, index) => [
+				{ v: index + 1, t: 'n' },
+				{ f: `$H$2*${Number(dent.minorAxis)/1000}`, t: 'n' },
+				{ f: `$H$2*${Number(dent.majorAxis)/1000}`, t: 'n' },
+				{ f: `$H$3*${Number(dent.maxDepth)}`, t: 'n' },
+				`(${dent.centroidX}, ${dent.centroidY})`,
+				dent.angle || ''
+			]);
+			XLSX.utils.sheet_add_aoa(ws, dentRows, { origin: 'A2' });
+	
+			// --- Hailpad parameters table ---
+			const paramStyle = {
+				font: { bold: true },
+				alignment: { horizontal: 'center' },
+				fill: { fgColor: { rgb: "BFBFBF" } }
+			};
+	
+			XLSX.utils.sheet_add_aoa(ws, [
+				['Hailpad Parameters', ''],
+				['Box-fitting Length (mm)', Number(boxfit)],
+				['Max. Depth (mm)', Number(maxDepth)]
+			], { origin: 'G1' });
+	
+			ws['G1'].s = paramStyle;
+			ws['G2'].s = { font: { bold: true } };
+			ws['G3'].s = { font: { bold: true } };
+	
+			if (!ws['!merges']) ws['!merges'] = [];
+			ws['!merges'].push({ s: { r: 0, c: 6 }, e: { r: 0, c: 7 } });
+	
+			ws['!cols'] = [
+				{ width: 8 },
+				{ width: 15 },
+				{ width: 15 },
+				{ width: 15 },
+				{ width: 15 },
+				{ width: 12 },
+				{ width: 20 },
+				{ width: 15 }
+			];
+	
+			for (let i = 2; i <= dents.length + 1; i++) {
+				['B', 'C', 'D'].forEach(col => {
+					const cell = ws[`${col}${i}`];
+					if (cell) cell.z = '0.00'; // (Rounding to 2 decimal places)
+				});
+			}
+	
+			XLSX.utils.book_append_sheet(wb, ws, 'Hailpad Data');
+			XLSX.writeFile(wb, `${hailpadName}.xlsx`);
 		}
 	}, [download]);
 

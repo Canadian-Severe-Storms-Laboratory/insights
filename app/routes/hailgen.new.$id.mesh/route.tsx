@@ -181,8 +181,8 @@ export default function () {
 								<Label htmlFor="single">Single hailpad</Label>
 							</div>
 							<div className="flex items-center space-x-2">
-								<RadioGroupItem value="pair" id="pair" />
-								<Label htmlFor="pair">Hailpad pair</Label>
+								<RadioGroupItem value="pair" id="pair" disabled={true} />
+								<Label htmlFor="pair" className="opacity-50">Hailpad pair</Label>
 							</div>
 						</RadioGroup>
 						{fields.pairAnalysis && (

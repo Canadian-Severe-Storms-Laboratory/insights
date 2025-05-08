@@ -41,6 +41,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	await protectedRoute(request);
 
 	const url = new URL(request.url);
+	const depthX = url.searchParams.get('depthX');
+    const depthY = url.searchParams.get('depthY');
 
 	if (!params.id) {
 		return redirect('/hailgen');
@@ -58,7 +60,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return json({
 		queriedHailpad,
-		depthMapPath
+		depthMapPath,
+		depthX: depthX ? Number(depthX) : undefined,
+        depthY: depthY ? Number(depthY) : undefined
 	});
 }
 
@@ -98,7 +102,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function () {
 	const navigation = useNavigation();
 	const data = useLoaderData<typeof loader>();
-	const { queriedHailpad, depthMapPath } = data;
+	const { queriedHailpad, depthMapPath, depthX: initialDepthX, depthY: initialDepthY } = data;
 	const lastResult = useActionData<typeof action>();
 	const [form, fields] = useForm({
 		lastResult,
@@ -110,14 +114,16 @@ export default function () {
 	const [depthY, setDepthY] = useState<number>(0);
 	const status = useUploadStatus<UploadStatusEventDepth>(queriedHailpad.id); // Used to handle depth map loading when service is done processing
 
-
 	useEffect(() => {
-		if (status && status.success) {
-			setIsLoading(false);
+		setIsLoading(false);
+		if (initialDepthX && initialDepthY) {
+			setDepthX(initialDepthX);
+			setDepthY(initialDepthY);
+		} else if (status && status.success) {
 			setDepthX(Number(status.event?.maxDepthLocation[0]));
 			setDepthY(Number(status.event?.maxDepthLocation[1]));
 		}
-	}, [status]);
+	}, [status, initialDepthX, initialDepthY]);
 
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -174,7 +180,6 @@ export default function () {
 									<Input
 										key={fields.depth.key}
 										name={fields.depth.name}
-										// defaultValue={fields.depth.initialValue}
 										placeholder="Maximum Depth"
 										disabled={isLoading}
 									/>
