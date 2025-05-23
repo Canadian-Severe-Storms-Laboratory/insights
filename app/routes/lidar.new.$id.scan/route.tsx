@@ -73,8 +73,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const directory = `${env.SCAN_DIRECTORY}/${scan.folderName}`;
 
 	const handler = unstable_createFileUploadHandler({
-		// 1GB
-		maxPartSize: 1024 * 1024 * 1024,
+		// 5GB
+		maxPartSize: 5 * 1024 * 1024 * 1024,
 		filter: (file) => {
 			if (!file.filename) return false;
 			return file.filename.endsWith('.las') || file.filename.endsWith('.laz');
