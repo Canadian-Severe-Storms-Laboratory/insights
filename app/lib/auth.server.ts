@@ -25,7 +25,8 @@ authenticator.use(
 				return false;
 			},
 			totpGeneration: {
-				charSet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+				charSet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+				period: 60 * 10, // 10 minutes
 			},
 			maxAge: 60 * 60 * 24,
 			magicLinkPath: '/auth/magic-link',
