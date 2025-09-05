@@ -79,7 +79,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const data = await request.json();
 
 	interface HailpadDent {
-		// TODO: Use shared interface
 		id: string;
 		angle: string | null;
 		centroidX: string;

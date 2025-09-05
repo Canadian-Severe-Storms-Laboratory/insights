@@ -20,7 +20,6 @@ export function HailpadCard({
 					<CardTitle>{hailpad.name}</CardTitle>
 				</CardHeader>
 				<div className="flex flex-row items-center gap-4">
-					{/* TODO: Update other cards to follow same layout */}
 					<Link to={`/hailgen/${hailpad.id}`} prefetch="none">
 						<Button className="max-w-44 gap-2">
 							<Eye size={16} />
@@ -33,7 +32,6 @@ export function HailpadCard({
 				</div>
 			</div>
 			<CardContent className="flex flex-col items-center">
-				{/* {hailpad.status === 'processing' && <p>Fetching status from Hailgen service...</p>} TODO */}
 				{depthMapPath ? <img src={depthMapPath} className="w-[400px]" /> : <p>Failed to load depth map</p>}
 			</CardContent>
 		</Card>

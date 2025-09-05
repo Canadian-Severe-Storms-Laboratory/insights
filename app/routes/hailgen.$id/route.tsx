@@ -19,7 +19,6 @@ export type UploadStatusEvent = Readonly<{
 }>;
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	id: string;
 	angle: string | null;
 	centroidX: string;
@@ -99,7 +98,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const createdMaxDepth = formData.get('createdMaxDepth');
 	const createdLocation = formData.get('createdLocation');
 
-	// TODO: Replace with switch block
 	if (boxfit) {
 		await db
 			.update(hailpad)
@@ -197,8 +195,6 @@ export default function () {
 	useEffect(() => {
 		if (userId) setAuthenticated(true);
 	}, [userId]);
-
-	// TODO: Reload window on successful upload and retreival of updated data from service
 
 	useEffect(() => {
 		// Convert major and minor axes from px to mm based on boxfit length

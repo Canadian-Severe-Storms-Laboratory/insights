@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	angle: string | null;
 	centroidX: string;
 	centroidY: string;
@@ -64,7 +63,7 @@ export default function HailpadMap({
 						);
 					}
 
-					context.strokeStyle = i === index ? '#8F55E0' : '#909090';
+					context.strokeStyle = i === index ? '#8F55E0' : '#8F55E0';
 					context.lineWidth = 3;
 					context.setLineDash([7, 5]);
 					context.stroke();
@@ -132,6 +131,6 @@ export default function HailpadMap({
 	}, [onIndexChange, index, dentData, depthMapPath, showCentroids, showFittedEllipses]);
 
 	return (
-		<canvas ref={canvasRef} width={1000} height={1000} /> // TODO: Responsive sizing
+		<canvas ref={canvasRef} width={1000} height={1000} />
 	);
 }

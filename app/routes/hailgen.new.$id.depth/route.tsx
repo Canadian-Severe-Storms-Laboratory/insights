@@ -141,7 +141,7 @@ export default function () {
 
 			// Draw depth map and mark max. depth
 			depthMap.onload = () => {
-				context.fillStyle = '#8F55E0'; // TODO: Use a theme color
+				context.fillStyle = '#8F55E0';
 				context.drawImage(depthMap, 0, 0, 1000, 1000);
 				context.globalAlpha = 1;
 				context.beginPath();

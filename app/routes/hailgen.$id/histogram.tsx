@@ -10,7 +10,7 @@ import {
 const chartConfig = {
 	count: {
 		label: 'Count',
-		color: '#8F55E0' // TODO: Use theme
+		color: '#8F55E0'
 	}
 } satisfies ChartConfig;
 

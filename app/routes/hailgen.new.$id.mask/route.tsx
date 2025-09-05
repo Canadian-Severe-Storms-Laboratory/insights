@@ -176,7 +176,7 @@ export default function () {
 		if (!context) return;
 
 		depthMap = new Image();
-		depthMap.crossOrigin = "anonymous"; // TODO: Retained for local testing purposes
+		// depthMap.crossOrigin = "anonymous"; // For local testing purposes
 		depthMap.src = depthMapPath;
 
 		depthMap.onload = () => {
@@ -236,7 +236,7 @@ export default function () {
 
 				cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-				// TODO: Currently just removing the largest edge but this isn't ideal if dents are connected or the edge artifact is broken up from erosion
+				// Note: Currently just removing the largest edge but this isn't ideal if dents are connected or the edge artifact is broken up from erosion
 				let largest = 0;
 
 				for (let i = 0; i < contours.size(); i++) {
@@ -366,7 +366,8 @@ export default function () {
 													<div className="mb-2 w-fit">
 														<p className="text-lg font-semibold">About CLAHE</p>
 														<CardDescription className="flex flex-col space-y-2 text-sm">
-															TODO
+															Contrast Limited Adaptive Histogram Equalization (CLAHE) enhances local contrast in images by applying histogram equalization to local regions (tiles) while limiting noise amplification.
+															This technique is particularly useful for improving the visibility of features in images with varying lighting conditions.
 														</CardDescription>
 													</div>
 												</div>

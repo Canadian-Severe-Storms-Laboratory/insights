@@ -10,13 +10,10 @@ import { Checkbox } from '~/components/ui/checkbox';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
-import { Separator } from '~/components/ui/separator';
-import { Slider } from '~/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import Histogram from './histogram';
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	angle: string | null;
 	centroidX: string;
 	centroidY: string;
@@ -53,7 +50,6 @@ function DetailSection({ min, max, avg }: { min?: number; max?: number; avg?: nu
 	);
 }
 
-// TODO: Move to route
 function createBoxfitSchema() {
 	return z.object({
 		boxfit: z.number().min(0, {
@@ -289,8 +285,6 @@ export default function HailpadDetails({
 						<TabsList>
 							<TabsTrigger value="minor">Minor Axis</TabsTrigger>
 							<TabsTrigger value="major">Major Axis</TabsTrigger>
-							{/* <TabsTrigger value="depth">Depth</TabsTrigger> TODO */}
-							{/* <TabsTrigger value="3d" className="ml-8">3D</TabsTrigger> TODO */}
 						</TabsList>
 						<div className="flex flex-row space-x-2">
 							<Button
