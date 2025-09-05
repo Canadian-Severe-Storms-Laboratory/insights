@@ -1,56 +1,26 @@
-// Use these width="641" height="613" to calculate an aspect ratio
-const aspectRatio = 641 / 613;
-
 export function CsslLogo({ size, className }: { size: number; className?: string }) {
 	return (
 		<svg
 			width={size}
-			height={size * aspectRatio}
-			viewBox="0 0 641 613"
+			height={size}
+			viewBox="0 0 52 52"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
 		>
-			<path d="M57 0H641V46H57V0Z" fill="currentColor" />
-			<path d="M57 68H641V114H57V68Z" fill="currentColor" />
-			<path d="M69 567H231V613H69V567Z" fill="currentColor" />
-			<path d="M69 613V533H115V613H69Z" fill="currentColor" />
-			<path d="M126 136H483V182H126V136Z" fill="currentColor" />
-			<path d="M126 204H483V250H126V204Z" fill="currentColor" />
-			<path d="M124 272H483V318H124V272Z" fill="currentColor" />
-			<path
-				d="M126 136C94.5198 136 69 161.52 69 193C69 224.48 94.5198 250 126 250V204C119.925 204 115 199.075 115 193C115 186.925 119.925 182 126 182V136Z"
-				fill="currentColor"
-			/>
-			<path
-				d="M57 0C25.5198 0 0 25.5198 0 57C0 88.4802 25.5198 114 57 114V68C50.9249 68 46 63.0751 46 57C46 50.9249 50.9249 46 57 46V0Z"
-				fill="currentColor"
-			/>
-			<path
-				d="M483 318C514.48 318 540 292.48 540 261C540 229.52 514.48 204 483 204V250C489.075 250 494 254.925 494 261C494 267.075 489.075 272 483 272V318Z"
-				fill="currentColor"
-			/>
-			<path d="M124 340H348V386H124V340Z" fill="currentColor" />
-			<path d="M124 408H348V454H124V408Z" fill="currentColor" />
-			<path d="M124 476H348V522H124V476Z" fill="currentColor" />
-			<path
-				d="M124 340C92.5198 340 67 365.52 67 397C67 428.48 92.5198 454 124 454V408C117.925 408 113 403.075 113 397C113 390.925 117.925 386 124 386V340Z"
-				fill="currentColor"
-			/>
-			<path
-				d="M348 522C379.48 522 405 496.48 405 465C405 433.52 379.48 408 348 408V454C354.075 454 359 458.925 359 465C359 471.075 354.075 476 348 476V522Z"
-				fill="currentColor"
-			/>
-			<path d="M56 0.3125L58 0V46H56V0.3125Z" fill="currentColor" />
-			<path d="M56 68.3125L58 68V114L56 113V68.3125Z" fill="currentColor" />
-			<path d="M125 136.312L127 136V182H125V136.312Z" fill="currentColor" />
-			<path d="M125 204.312L127 204V250L125 249V204.312Z" fill="currentColor" />
-			<path d="M482 204.312L484 204V250H482V204.312Z" fill="currentColor" />
-			<path d="M482 272.312L484 272V318L482 317V272.312Z" fill="currentColor" />
-			<path d="M123 340.312L125 340V386H123V340.312Z" fill="currentColor" />
-			<path d="M123 408.312L125 408V454L123 453V408.312Z" fill="currentColor" />
-			<path d="M347 408.312L349 408V454H347V408.312Z" fill="currentColor" />
-			<path d="M347 476.312L349 476V522L347 521V476.312Z" fill="currentColor" />
+			<g clipPath="url(#clip0_1_149)">
+				<path d="M3.09236 27.1999C3.09236 22.9558 7.93899 18.5358 9.56649 17.1706C9.7181 17.0599 9.90266 17 10.0924 17C10.2821 17 10.4666 17.0599 10.6182 17.1706C12.2457 18.5358 17.0924 22.9558 17.0924 27.1999C17.0924 29.0034 16.3549 30.733 15.0421 32.0083C13.7294 33.2836 11.9489 34 10.0924 34C8.23584 34 6.45537 33.2836 5.14261 32.0083C3.82986 30.733 3.09236 29.0034 3.09236 27.1999Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+				<path d="M19.7053 42.7995C19.5897 42.8001 19.4764 42.7524 19.3785 42.6618C19.2806 42.5713 19.2021 42.4417 19.1522 42.2882C19.1023 42.1346 19.083 41.9633 19.0966 41.7942C19.1101 41.6251 19.156 41.4651 19.2288 41.3329L25.2765 32.1553C25.3219 32.0782 25.3837 32.0261 25.4519 32.0075C25.52 31.9889 25.5904 32.0051 25.6515 32.0532C25.7126 32.1013 25.7607 32.1786 25.7881 32.2724C25.8154 32.3661 25.8203 32.4708 25.8019 32.5692L24.629 37.9858C24.5944 38.1221 24.5828 38.2688 24.5952 38.4132C24.6075 38.5576 24.6435 38.6954 24.6999 38.8149C24.7564 38.9343 24.8317 39.0318 24.9194 39.0989C25.007 39.1661 25.1044 39.2009 25.2032 39.2005H29.4794C29.595 39.1999 29.7083 39.2476 29.8062 39.3382C29.9042 39.4287 29.9826 39.5583 30.0325 39.7118C30.0824 39.8654 30.1017 40.0367 30.0881 40.2058C30.0746 40.3749 30.0287 40.5349 29.9559 40.6671L23.9082 49.8447C23.8628 49.9218 23.801 49.9739 23.7329 49.9925C23.6647 50.0111 23.5944 49.9949 23.5333 49.9468C23.4722 49.8987 23.424 49.8214 23.3967 49.7276C23.3693 49.6339 23.3644 49.5292 23.3828 49.4308L24.5557 44.0142C24.5903 43.8779 24.6019 43.7312 24.5896 43.5868C24.5772 43.4424 24.5413 43.3046 24.4848 43.1851C24.4283 43.0657 24.353 42.9682 24.2654 42.9011C24.1777 42.8339 24.0803 42.7991 23.9815 42.7995H19.7053Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+				<circle cx="42.0924" cy="26" r="8" fill="currentColor" stroke="currentColor" strokeWidth="2" />
+				<path d="M25.084 19.4161L18.6171 4.65119C18.3277 3.99046 18.8118 3.25 19.5331 3.25L32.4669 3.25C33.1882 3.25 33.6723 3.99047 33.3829 4.6512L26.916 19.4161C26.5663 20.2145 25.4337 20.2145 25.084 19.4161Z" fill="currentColor" stroke="currentColor" strokeWidth="2" />
+				<path d="M3 3.11072L49 49.1107" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+				<path d="M49 3.11072L3 49.1107" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+			</g>
+			<defs>
+				<clipPath id="clip0_1_149">
+					<rect width="52" height="52" fill="currentColor" />
+				</clipPath>
+			</defs>
 		</svg>
 	);
 }

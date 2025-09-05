@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx-js-style';
 import { ActionFunctionArgs, LoaderFunctionArgs, createCookieSessionStorage, json } from '@remix-run/node';
 import { useActionData, useLoaderData } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
@@ -18,7 +19,6 @@ export type UploadStatusEvent = Readonly<{
 }>;
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	id: string;
 	angle: string | null;
 	centroidX: string;
@@ -61,8 +61,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	const depthMapPath = `${env.BASE_URL}/${env.PUBLIC_HAILPAD_DIRECTORY}/${queriedHailpad.folderName}/dmap.png`;
 	const boxfit = queriedHailpad.boxfit;
 	const maxDepth = queriedHailpad.maxDepth;
-	const adaptiveBlockSize = queriedHailpad.adaptiveBlockSize;
-	const adaptiveC = queriedHailpad.adaptiveC;
 	const hailpadId = queriedHailpad.id;
 	const hailpadName = queriedHailpad.name;
 
@@ -72,8 +70,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		depthMapPath,
 		boxfit,
 		maxDepth,
-		adaptiveBlockSize,
-		adaptiveC,
 		hailpadId,
 		hailpadName
 	});
@@ -90,11 +86,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const boxfit = formData.get('boxfit');
 	const maxDepth = formData.get('maxDepth');
 
-	// Thresholding fields
-	const adaptiveBlock = formData.get('adaptiveBlock');
-	const adaptiveC = formData.get('adaptiveC');
-	let analysisStatus;
-
 	// Dent management fields
 	const dentID = formData.get('dentID');
 	const currentBoxfit = formData.get('currentBoxfit');
@@ -107,7 +98,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const createdMaxDepth = formData.get('createdMaxDepth');
 	const createdLocation = formData.get('createdLocation');
 
-	// TODO: Replace with switch block
 	if (boxfit) {
 		await db
 			.update(hailpad)
@@ -126,62 +116,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				updatedAt: new Date()
 			})
 			.where(eq(hailpad.id, params.id));
-	} else if (adaptiveBlock && adaptiveC) {
-		// TODO: Create status change and show in UI
-
-		// Update hailpad with new adaptive block size and adaptive C-value
-		await db
-			.update(hailpad)
-			.set({
-				adaptiveBlockSize: adaptiveBlock.toString(),
-				adaptiveC: adaptiveC.toString(),
-				updatedBy: userId,
-				updatedAt: new Date()
-			})
-			.where(eq(hailpad.id, params.id));
-
-		// Delete existing dents
-		await db.delete(dent).where(eq(dent.hailpadId, params.id));
-
-		// Get hailpad
-		const queriedHailpad = await db.query.hailpad.findFirst({
-			where: eq(hailpad.id, params.id)
-		});
-
-		if (!queriedHailpad) return;
-
-		const filePath = `${env.SERVICE_HAILGEN_DIRECTORY}/${queriedHailpad.folderName}`;
-
-		// Invoke microservice with uploaded file path for processing
-		// if (env.SERVICE_HAILGEN_ENABLED) {
-		analysisStatus = true;
-		try {
-			await fetch(new URL(`${process.env.SERVICE_HAILGEN_URL}/hailgen/dmap`), {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					hailpad_id: params.id,
-					file_paths: [`${filePath}/hailpad.stl`],
-					adaptive_block: queriedHailpad.adaptiveBlockSize,
-					adaptive_c: queriedHailpad.adaptiveC
-				})
-			});
-		} catch (error) {
-			console.error(error);
-		}
-
-		await db
-			.update(hailpad)
-			.set({
-				updatedBy: userId,
-				updatedAt: new Date()
-			})
-			.where(eq(hailpad.id, params.id));
-		// } else {
-		// 	console.log('Hailgen service is disabled');
-		// } // TODO: Uncomment
 	} else if (deleteDentID) {
 		await db.delete(dent).where(eq(dent.hailpadId, params.id) && eq(dent.id, String(deleteDentID)));
 
@@ -231,10 +165,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 			.where(eq(hailpad.id, params.id));
 	}
-
-	if (!analysisStatus) analysisStatus = false;
-
-	return { analysisStatus };
+	return null;
 }
 
 export default function () {
@@ -244,6 +175,7 @@ export default function () {
 	const [authenticated, setAuthenticated] = useState<boolean>(false);
 	const [currentIndex, setCurrentIndex] = useState<number>(0);
 	const [showCentroids, setShowCentroids] = useState<boolean>(false);
+	const [showFittedEllipses, setShowFittedEllipses] = useState<boolean>(false);
 	const [download, setDownload] = useState<boolean>(false);
 	const [dentData, setDentData] = useState<HailpadDent[]>([]);
 	const [filters, setFilters] = useState<{
@@ -258,18 +190,11 @@ export default function () {
 		maxMajor: Infinity
 	});
 
-	const { userId, dents, depthMapPath, boxfit, maxDepth, adaptiveBlockSize, adaptiveC, hailpadName, hailpadId } = data;
-	const [performingAnalysis, setPerformingAnalysis] = useState<boolean>(actionData?.analysisStatus || false);
-
-	useEffect(() => {
-		setPerformingAnalysis(actionData?.analysisStatus || false);
-	}, [actionData])
+	const { userId, dents, depthMapPath, boxfit, maxDepth, hailpadName, hailpadId } = data;
 
 	useEffect(() => {
 		if (userId) setAuthenticated(true);
 	}, [userId]);
-
-	// TODO: Reload window on successful upload and retreival of updated data from service
 
 	useEffect(() => {
 		// Convert major and minor axes from px to mm based on boxfit length
@@ -301,24 +226,76 @@ export default function () {
 	useEffect(() => {
 		if (download) {
 			setDownload(false);
-
-			// Prepare dent data for CSV
-			const headers = ['Minor Axis (mm)', 'Major Axis (mm)'];
-			const csvData = dentData.map((dent) => {
-				return `${dent.minorAxis},${dent.majorAxis}`;
+	
+			const wb = XLSX.utils.book_new();
+			const ws = XLSX.utils.aoa_to_sheet([]);
+	
+			const headerStyle = {
+				font: { bold: true },
+				alignment: { horizontal: 'center' },
+				fill: { fgColor: { rgb: "BFBFBF" } }
+			};
+	
+			// --- Dent data table ---
+			XLSX.utils.sheet_add_aoa(ws, [
+				['Dent #', 'Minor Axis (mm)', 'Major Axis (mm)', 'Max. Depth (mm)', 'Centroid (x, y)', 'Angle (rad)']
+			], { origin: 'A1' });
+	
+			['A1', 'B1', 'C1', 'D1', 'E1', 'F1'].forEach(cell => {
+				if (!ws[cell]) ws[cell] = {};
+				ws[cell].s = headerStyle;
 			});
-
-			// Prepend headers to CSV data
-			csvData.unshift(headers.join(','));
-			const csv = csvData.join('\n');
-			const blob = new Blob([csv], { type: 'text/csv' });
-
-			// Download CSV
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `${hailpadName}.csv`;
-			a.click();
+	
+			const dentRows = dents.map((dent, index) => [
+				{ v: index + 1, t: 'n' },
+				{ f: `$H$2*${Number(dent.minorAxis)/1000}`, t: 'n' },
+				{ f: `$H$2*${Number(dent.majorAxis)/1000}`, t: 'n' },
+				{ f: `$H$3*${Number(dent.maxDepth)}`, t: 'n' },
+				`(${dent.centroidX}, ${dent.centroidY})`,
+				dent.angle || ''
+			]);
+			XLSX.utils.sheet_add_aoa(ws, dentRows, { origin: 'A2' });
+	
+			// --- Hailpad parameters table ---
+			const paramStyle = {
+				font: { bold: true },
+				alignment: { horizontal: 'center' },
+				fill: { fgColor: { rgb: "BFBFBF" } }
+			};
+	
+			XLSX.utils.sheet_add_aoa(ws, [
+				['Hailpad Parameters', ''],
+				['Box-fitting Length (mm)', Number(boxfit)],
+				['Max. Depth (mm)', Number(maxDepth)]
+			], { origin: 'G1' });
+	
+			ws['G1'].s = paramStyle;
+			ws['G2'].s = { font: { bold: true } };
+			ws['G3'].s = { font: { bold: true } };
+	
+			if (!ws['!merges']) ws['!merges'] = [];
+			ws['!merges'].push({ s: { r: 0, c: 6 }, e: { r: 0, c: 7 } });
+	
+			ws['!cols'] = [
+				{ width: 8 },
+				{ width: 15 },
+				{ width: 15 },
+				{ width: 15 },
+				{ width: 15 },
+				{ width: 12 },
+				{ width: 20 },
+				{ width: 15 }
+			];
+	
+			for (let i = 2; i <= dents.length + 1; i++) {
+				['B', 'C', 'D'].forEach(col => {
+					const cell = ws[`${col}${i}`];
+					if (cell) cell.z = '0.00'; // (Rounding to 2 decimal places)
+				});
+			}
+	
+			XLSX.utils.book_append_sheet(wb, ws, 'Hailpad Data');
+			XLSX.writeFile(wb, `${hailpadName}.xlsx`);
 		}
 	}, [download]);
 
@@ -346,6 +323,7 @@ export default function () {
 							dentData={dentData}
 							depthMapPath={depthMapPath}
 							showCentroids={showCentroids}
+							showFittedEllipses={showFittedEllipses}
 							onIndexChange={setCurrentIndex}
 						/>
 					</Suspense>
@@ -357,11 +335,9 @@ export default function () {
 					dentData={dentData}
 					boxfit={boxfit}
 					maxDepth={maxDepth}
-					adaptiveBlockSize={adaptiveBlockSize}
-					adaptiveC={adaptiveC}
-					performingAnalysis={performingAnalysis}
 					onFilterChange={setFilters}
 					onShowCentroids={setShowCentroids}
+					onShowFittedEllipses={setShowFittedEllipses}
 					onDownload={setDownload}
 				/>
 			</div>

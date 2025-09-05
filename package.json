@@ -2,7 +2,7 @@
 	"name": "insights",
 	"private": true,
 	"sideEffects": false,
-	"version": "2024.0.1",
+	"version": "2025.1",
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
@@ -43,6 +43,7 @@
 		"@remix-run/server-runtime": "2.11.2",
 		"@t3-oss/env-core": "^0.11.0",
 		"@tanstack/react-table": "^8.19.3",
+		"@techstark/opencv-js": "^4.10.0-release.1",
 		"@types/mapbox-gl": "^3.4.0",
 		"axios": "^1.7.9",
 		"class-variance-authority": "^0.7.0",
@@ -72,6 +73,7 @@
 		"tailwind-merge": "^2.4.0",
 		"tailwindcss-animate": "^1.0.7",
 		"three": "^0.167.1",
+		"xlsx-js-style": "^1.2.0",
 		"zod": "^3.23.4",
 		"zustand": "^4.5.4"
 	},

@@ -10,13 +10,10 @@ import { Checkbox } from '~/components/ui/checkbox';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
-import { Separator } from '~/components/ui/separator';
-import { Slider } from '~/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import Histogram from './histogram';
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	angle: string | null;
 	centroidX: string;
 	centroidY: string;
@@ -53,7 +50,6 @@ function DetailSection({ min, max, avg }: { min?: number; max?: number; avg?: nu
 	);
 }
 
-// TODO: Move to route
 function createBoxfitSchema() {
 	return z.object({
 		boxfit: z.number().min(0, {
@@ -66,17 +62,6 @@ function createMaxDepthSchema() {
 	return z.object({
 		maxDepth: z.number().min(0, {
 			message: 'Max. depth length must be positive.'
-		})
-	});
-}
-
-function createThresholdSchema() {
-	return z.object({
-		adaptiveBlock: z.number().min(-25, {
-			message: 'Adaptive block size must be at least -25.'
-		}),
-		adaptiveC: z.number().min(-10, {
-			message: 'Adaptive C-value must be at least -10.'
 		})
 	});
 }
@@ -112,20 +97,15 @@ export default function HailpadDetails({
 	dentData,
 	boxfit,
 	maxDepth,
-	adaptiveBlockSize,
-	adaptiveC,
-	performingAnalysis,
 	onFilterChange,
 	onShowCentroids,
+	onShowFittedEllipses,
 	onDownload
 }: {
 	authenticated: boolean;
 	dentData: HailpadDent[];
 	boxfit: string;
 	maxDepth: string;
-	adaptiveBlockSize: string;
-	adaptiveC: string;
-	performingAnalysis: boolean;
 	onFilterChange: (value: {
 		minMinor: number;
 		maxMinor: number;
@@ -133,6 +113,7 @@ export default function HailpadDetails({
 		maxMajor: number;
 	}) => void;
 	onShowCentroids: (value: boolean) => void;
+	onShowFittedEllipses: (value: boolean) => void;
 	onDownload: (value: boolean) => void;
 }) {
 	const [minMinor, setMinMinor] = useState<number>(0);
@@ -146,10 +127,8 @@ export default function HailpadDetails({
 
 	const [depth, setDepth] = useState<number>(0);
 
-	const [adaptiveBlockSliderValue, setAdaptiveBlockSliderValue] = useState<number>(0);
-	const [adaptiveCSliderValue, setAdaptiveCSliderValue] = useState<number>(0);
-
 	const [isShowCentroidChecked, setIsShowCentroidChecked] = useState<boolean>(false);
+	const [isShowFittedEllipsesChecked, setIsShowFittedEllipsesChecked] = useState<boolean>(false);
 
 	const [boxfitForm, boxfitFields] = useForm({
 		onValidate({ formData }) {
@@ -171,16 +150,6 @@ export default function HailpadDetails({
 		}
 	});
 
-	const [thresholdForm, thresholdFields] = useForm({
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: createThresholdSchema() });
-		},
-		onSubmit() {
-			const formData = new FormData();
-			formData.append(thresholdFields.adaptiveBlock.name, thresholdFields.adaptiveBlock.value || '');
-			formData.append(thresholdFields.adaptiveC.name, thresholdFields.adaptiveC.value || '');
-		}
-	});
 
 	const [filterForm, filterFields] = useForm({
 		onValidate({ formData }) {
@@ -207,10 +176,7 @@ export default function HailpadDetails({
 		setAvgMajor(dentData.reduce((acc, dent) => acc + Number(dent.majorAxis), 0) / dentData.length);
 
 		setDepth(dentData.reduce((acc, dent) => acc + Number(dent.maxDepth), 0) / dentData.length);
-
-		setAdaptiveBlockSliderValue(Number(adaptiveBlockSize));
-		setAdaptiveCSliderValue(Number(adaptiveC));
-	}, [dentData, adaptiveBlockSize, adaptiveC]);
+	}, [dentData]);
 
 	return (
 		<Card>
@@ -247,6 +213,20 @@ export default function HailpadDetails({
 											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 										>
 											Show centroids
+										</Label>
+									</div>
+									<div className="flex flex-row items-center space-x-2">
+										<Checkbox
+											id="show-fitted-ellipses"
+											checked={isShowFittedEllipsesChecked}
+											onClick={() => setIsShowFittedEllipsesChecked(!isShowFittedEllipsesChecked)}
+											onCheckedChange={onShowFittedEllipses}
+										/>
+										<Label
+											htmlFor="show-fitted-ellipses"
+											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										>
+											Show fitted ellipses
 										</Label>
 									</div>
 									<FormProvider context={boxfitForm.context}>
@@ -293,58 +273,6 @@ export default function HailpadDetails({
 											<p className="text-sm text-primary/60">{maxDepthFields.maxDepth.errors}</p>
 										</Form>
 									</FormProvider>
-									<Separator />
-									<div className="mb-4">
-										<p className="text-lg font-semibold">Reprocess</p>
-										<CardDescription className="text-sm">
-											Adjust depth map thresholding.
-										</CardDescription>
-									</div>
-									<FormProvider context={thresholdForm.context}>
-										<Form id={thresholdForm.id} method="post" onSubmit={thresholdForm.onSubmit}>
-											<div className="mb-2 mt-6 flex flex-row justify-between">
-												<Label htmlFor={thresholdFields.adaptiveBlock.id}>
-													Adaptive Block Size
-												</Label>
-												<CardDescription>{adaptiveBlockSliderValue}</CardDescription>
-											</div>
-											<Slider
-												defaultValue={[Number(adaptiveBlockSize)]}
-												key={thresholdFields.adaptiveBlock.key}
-												name={thresholdFields.adaptiveBlock.name}
-												min={-25}
-												max={25}
-												step={1}
-												onValueChange={(value: number[]) => setAdaptiveBlockSliderValue(value[0])}
-											/>
-											<div className="mb-2 mt-4 flex flex-row justify-between">
-												<Label htmlFor={thresholdFields.adaptiveC.id}>
-													Adaptive <span className="italic">C</span>-Value
-												</Label>
-												<CardDescription>{adaptiveCSliderValue}</CardDescription>
-											</div>
-											<Slider
-												defaultValue={[Number(adaptiveC)]}
-												key={thresholdFields.adaptiveC.key}
-												name={thresholdFields.adaptiveC.name}
-												min={-10}
-												max={10}
-												step={1}
-												onValueChange={(value: number[]) => setAdaptiveCSliderValue(value[0])}
-											/>
-											<div className="flex flex-row">
-												{<Button
-													disabled={performingAnalysis}
-													type="submit"
-													variant="secondary"
-													className="mt-6 flex h-8 w-full flex-row items-center justify-between space-x-2 p-4 px-3 pr-2 text-sm"
-												>
-													{performingAnalysis ? "Performing new analysis..." : "Perform new analysis"}
-													<CornerDownLeft className="h-4 w-4" />
-												</Button>}
-											</div>
-										</Form>
-									</FormProvider>
 								</div>
 							</PopoverContent>
 						</Popover>
@@ -357,8 +285,6 @@ export default function HailpadDetails({
 						<TabsList>
 							<TabsTrigger value="minor">Minor Axis</TabsTrigger>
 							<TabsTrigger value="major">Major Axis</TabsTrigger>
-							{/* <TabsTrigger value="depth">Depth</TabsTrigger> TODO */}
-							{/* <TabsTrigger value="3d" className="ml-8">3D</TabsTrigger> TODO */}
 						</TabsList>
 						<div className="flex flex-row space-x-2">
 							<Button

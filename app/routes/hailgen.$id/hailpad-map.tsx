@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	angle: string | null;
 	centroidX: string;
 	centroidY: string;
@@ -15,12 +14,14 @@ export default function HailpadMap({
 	dentData,
 	depthMapPath,
 	showCentroids,
+	showFittedEllipses,
 	onIndexChange
 }: {
 	index: number;
 	dentData: HailpadDent[];
 	depthMapPath: string;
 	showCentroids: boolean;
+	showFittedEllipses: boolean;
 	onIndexChange: (index: number) => void;
 }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,11 +42,11 @@ export default function HailpadMap({
 
 			// Render clickable ellipse about centroid of selected dent
 			dentData.forEach((dent: HailpadDent, i: number) => {
-				const x = Number(dent.centroidX);
 				const y = Number(dent.centroidY);
+				const x = Number(dent.centroidX);
 				const defaultRadius = 20;
 
-				if (i === index) {
+				if (i === index || showFittedEllipses) {
 					context.globalAlpha = 1;
 					context.beginPath();
 					if (dent.angle === null) {
@@ -54,15 +55,15 @@ export default function HailpadMap({
 						context.ellipse(
 							x,
 							y,
-							Number(dent.majorAxis) * 1.25,
-							Number(dent.minorAxis) * 1.25,
+							Number(dent.majorAxis),
+							Number(dent.minorAxis),
 							Number(dent.angle) + Math.PI / 2,
 							0,
 							2 * Math.PI
 						);
 					}
 
-					context.strokeStyle = '#8F55E0'; // TODO: Use a theme color
+					context.strokeStyle = i === index ? '#8F55E0' : '#8F55E0';
 					context.lineWidth = 3;
 					context.setLineDash([7, 5]);
 					context.stroke();
@@ -127,9 +128,9 @@ export default function HailpadMap({
 			canvas.removeEventListener('click', handleClick);
 			canvas.removeEventListener('dblclick', handleDoubleClick);
 		};
-	}, [onIndexChange, index, dentData, depthMapPath, showCentroids]);
+	}, [onIndexChange, index, dentData, depthMapPath, showCentroids, showFittedEllipses]);
 
 	return (
-		<canvas ref={canvasRef} width={1000} height={1000} /> // TODO: Responsive sizing
+		<canvas ref={canvasRef} width={1000} height={1000} />
 	);
 }

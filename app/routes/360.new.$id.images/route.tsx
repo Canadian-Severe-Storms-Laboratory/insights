@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs, json, redirect } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import axios, { AxiosError } from 'axios';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useState } from 'react';
@@ -52,6 +52,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function () {
+	const navigate = useNavigate();
 	const path = useLoaderData<typeof loader>();
 	const [images, setImages] = useState<File[]>([]);
 	const [lastResult, setLastResult] = useState<UploadResponse | null>(null);
@@ -82,7 +83,6 @@ export default function () {
 						'Content-Type': 'multipart/form-data'
 					},
 					onUploadProgress: (progressEvent) => {
-						console.info(progressEvent);
 						const percentCompleted = progressEvent.lengthComputable
 							? progressEvent.progress || 0 * 100
 							: 0;
@@ -93,11 +93,9 @@ export default function () {
 					}
 				});
 
-				// Status is 302, redirect to the next page
-				if (response.status === 302 && response.data.status === 'redirect') {
-					window.location.href = response.headers.Location || response.data.to;
-					return;
-				}
+				// Status is 200, redirect to the next page
+				if (response.status === 200 && response.data.status === 'redirect')
+					return navigate(response.headers.Location || response.data.to);
 
 				// Unknown status
 				console.info(response);

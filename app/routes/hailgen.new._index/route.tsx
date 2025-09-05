@@ -3,8 +3,10 @@ import { conformZodMessage, parseWithZod } from '@conform-to/zod';
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
+import { Info } from 'lucide-react';
 import { mkdir } from 'node:fs/promises';
 import { z } from 'zod';
+import { BoxfitDiagram } from '~/components/boxfit-diagram';
 import { Button } from '~/components/ui/button';
 import {
 	Card,
@@ -16,6 +18,7 @@ import {
 } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 import { db } from '~/db/db.server';
 import { hailpad } from '~/db/schema';
 import { protectedRoute } from '~/lib/auth.server';
@@ -106,8 +109,6 @@ export async function action({ request }: ActionFunctionArgs) {
 			folderName,
 			boxfit: Number(boxfit).toString(),
 			maxDepth: Number(0).toString(), // Default value
-			adaptiveBlockSize: Number(21).toString(), // Default value
-			adaptiveC: Number(-4.0).toString(), // Default value
 			createdBy: userId,
 			updatedBy: userId
 		})
@@ -169,7 +170,30 @@ export default function () {
 									<p className="text-sm text-primary/60">{fields.folderName.errors}</p>
 								</div>
 								<div>
-									<Label htmlFor={fields.boxfit.id}>Box-fitting Length</Label>
+									<Label htmlFor={fields.boxfit.id}>
+										Box-fitting Length{' '}
+										<Popover>
+											<PopoverTrigger>
+												<Info className="ml-1" size={12} />
+											</PopoverTrigger>
+											<PopoverContent className="w-[420px]">
+												<div className="space-y-4">
+													<div className="flex grid-cols-2 gap-2">
+														<BoxfitDiagram size={300} className="h-fit" />
+														<div className="mb-2 w-fit">
+															<p className="text-lg font-semibold">About Box-fitting Length</p>
+															<CardDescription className="text-sm">
+																The box-fitting length (<span className="italic">l</span>) is the
+																largest length of the smallest box that can enclose the hailpad,
+																measured in mm. This value is used to map pixel measurements to
+																real-world units.
+															</CardDescription>
+														</div>
+													</div>
+												</div>
+											</PopoverContent>
+										</Popover>
+									</Label>
 									<Input
 										type="number"
 										key={fields.boxfit.key}

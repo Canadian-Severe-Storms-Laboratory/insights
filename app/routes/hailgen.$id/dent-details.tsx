@@ -1,7 +1,6 @@
 import { FormProvider, useForm } from '@conform-to/react';
 import { parseWithZod } from '@conform-to/zod';
 import { Form } from '@remix-run/react';
-import { set } from 'date-fns';
 import { ChevronLeft, ChevronRight, CornerDownLeft, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
@@ -12,7 +11,6 @@ import { Label } from '~/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 
 interface HailpadDent {
-	// TODO: Use shared interface
 	id: string;
 	angle: string | null;
 	centroidX: string;
@@ -22,7 +20,6 @@ interface HailpadDent {
 	maxDepth: string;
 }
 
-// TODO: Move to route
 function createDeleteSchema() {
 	return z
 		.object({

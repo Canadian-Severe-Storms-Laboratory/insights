@@ -1,39 +1,48 @@
 import { UploadResponse } from './upload-types';
 
-export function buildUploadResponse({
-	status,
-	data
-}:
-	| {
-			status: 'error';
-			data: {
-				message: string;
-			};
-	  }
-	| {
-			status: 'redirect';
-			data: string;
-	  }): Response {
-	switch (status) {
+export function buildUploadResponse(
+	response:
+		| {
+				status: 'success';
+		  }
+		| {
+				status: 'error';
+				data: {
+					message: string;
+				};
+		  }
+		| {
+				status: 'redirect';
+				data: string;
+		  }
+): Response {
+	switch (response.status) {
+		case 'success':
+			return new Response(
+				JSON.stringify({
+					status: 'success'
+				} as UploadResponse),
+				{
+					status: 200,
+					statusText: 'OK'
+				}
+			);
 		case 'redirect':
 			return new Response(
 				JSON.stringify({
 					status: 'redirect',
-					to: data
+					to: response.data
 				} as UploadResponse),
 				{
-					status: 302,
-					statusText: 'Found',
-					headers: {
-						Location: data
-					}
+					status: 200,
+					statusText: 'OK'
 				}
 			);
 		case 'error':
 			return new Response(
 				JSON.stringify({
 					status: 'error',
-					error: data
+					error: response.data
 				} as UploadResponse),
 				{
 					status: 400,

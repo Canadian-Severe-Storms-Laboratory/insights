@@ -5,6 +5,9 @@ import { dent, hailpad } from '~/db/schema';
 import { env } from '~/env.server';
 import { protectedRoute } from '~/lib/auth.server';
 import { StatusResponseSchema } from '~/lib/service-hailgen';
+import { uploadEventBus } from '~/lib/event-bus.server';
+import { UploadStatusEventMask } from './hailgen.new.$id.mask/route';
+import { UploadStatusEventDepth } from './hailgen.new.$id.depth/route';
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const id = params.id;
@@ -76,7 +79,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const data = await request.json();
 
 	interface HailpadDent {
-		// TODO: Use shared interface
 		id: string;
 		angle: string | null;
 		centroidX: string;
@@ -86,25 +88,36 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		maxDepth: string;
 	}
 
-	const dents = data.dents;
+	if (data.dents) {
+		data.dents.forEach(async (hailpadDent: HailpadDent) => {
+			const newDent = await db
+				.insert(dent)
+				.values({
+					hailpadId: id,
+					angle: hailpadDent.angle,
+					majorAxis: hailpadDent.majorAxis,
+					minorAxis: hailpadDent.minorAxis,
+					maxDepth: hailpadDent.maxDepth,
+					centroidX: hailpadDent.centroidX,
+					centroidY: hailpadDent.centroidY
+				})
+				.returning();
 
-	dents.forEach(async (hailpadDent: HailpadDent) => {
-		const newDent = await db
-			.insert(dent)
-			.values({
-				hailpadId: id,
-				angle: hailpadDent.angle,
-				majorAxis: hailpadDent.majorAxis,
-				minorAxis: hailpadDent.minorAxis,
-				maxDepth: hailpadDent.maxDepth,
-				centroidX: hailpadDent.centroidX,
-				centroidY: hailpadDent.centroidY
-			})
-			.returning();
+			if (newDent.length != 1) {
+				throw new Error('Error creating dent');
+			}
+		});
+	}
 
-		if (newDent.length != 1) {
-			throw new Error('Error creating dent');
-		}
+	// Emit an event to the status bus to notify the client of the status change
+	uploadEventBus.emit<UploadStatusEventMask>({
+		id,
+		maxDepthLocation: data.maxDepthLocation,
+	});
+
+	uploadEventBus.emit<UploadStatusEventDepth>({
+		id,
+		maxDepthLocation: data.maxDepthLocation,
 	});
 
 	// if (update.rowCount !== 1) return new Response(null, { status: 404 });
