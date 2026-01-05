@@ -1,11 +1,40 @@
+# dependencies (bun install)
 node_modules
 
-/.cache
-/build
+# output
+out
+dist
+*.tgz
+.turbo
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
 .env
+.env.*
 
-docker
+!.env.example
 
-# Ignore all subfolders in public
-/public/*
-!/public/favicon.ico
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# uploaded files
+uploads
+
+# Docker
+docker-compose.override.yml

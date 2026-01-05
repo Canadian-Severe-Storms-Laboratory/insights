@@ -1,1 +1,0 @@
-ALTER TABLE "captures" ADD COLUMN "taken_at" timestamp NOT NULL;

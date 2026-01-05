@@ -1,5 +1,0 @@
-{
-	"workbench.editor.customLabels.patterns": {
-		"**/app/routes/**/route.tsx": "Route - ${dirname}"
-	}
-}

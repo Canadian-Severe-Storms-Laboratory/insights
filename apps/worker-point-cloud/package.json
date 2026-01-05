@@ -1,0 +1,25 @@
+{
+    "name": "@insights/worker-point-cloud",
+    "module": "src/index.ts",
+    "type": "module",
+    "scripts": {
+        "dev": "bun run --env-file=../../.env --hot src/index.ts",
+        "build": "bun build src/index.ts --outdir dist --target bun",
+        "start": "bun run dist/index.js",
+        "clean": "rm -rf dist",
+        "check-types": "tsc --noEmit",
+        "lint": "oxlint -c ../../.oxlintrc.json 'src/**/*.ts' 'src/**/*.tsx'"
+    },
+    "private": true,
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "bullmq": "^5.64.1",
+        "drizzle-orm": "^0.44.7",
+        "@insights/shared": "workspace:*"
+    }
+}

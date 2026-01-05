@@ -1,15 +1,14 @@
-.DS_Store
+# Bun
 node_modules
-/build
-/.svelte-kit
-/package
-.env
-.env.*
-!.env.example
+.bun/
 
-# Ignore files for PNPM, NPM and YARN
-pnpm-lock.yaml
-package-lock.json
-yarn.lock
+# Build outputs
+dist
+build
+.next/
+.output/
 
-migrations
+# Logs & Caches
+*.log
+.eslintcache
+.prettiercache

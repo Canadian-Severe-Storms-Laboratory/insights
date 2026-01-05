@@ -1,0 +1,22 @@
+{
+    "plugins": [
+        "jsx-a11y",
+        "jsdoc",
+        "promise",
+        "typescript",
+        "vitest",
+        "react",
+        "react-perf",
+        "unicorn"
+    ],
+    "ignorePatterns": ["dist/", "node_modules/", "coverage/", "build/"],
+    "overrides": [
+        {
+            "files": ["apps/client/src/components/ui/**/*.tsx"],
+            "rules": {
+                "jsx-a11y/heading-has-content": "off",
+                "jsx-a11y/no-autofocus": "off"
+            }
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "strict": true,
+        "outDir": "dist",
+        "rootDir": "./src",
+        "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+        "noEmit": false,
+        "allowImportingTsExtensions": false,
+        "emitDeclarationOnly": true,
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["dist/**/*"]
+}
