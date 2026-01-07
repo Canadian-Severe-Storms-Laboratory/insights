@@ -1,1 +1,0 @@
-ALTER TABLE "paths" ADD COLUMN "panorama_data" jsonb;

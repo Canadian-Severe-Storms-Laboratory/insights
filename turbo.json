@@ -1,0 +1,21 @@
+{
+    "$schema": "https://turborepo.com/schema.json",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build", "check-types", "lint"],
+            "outputs": ["dist/**"]
+        },
+        "check-types": {
+            "outputs": []
+        },
+        "lint": {
+            "outputs": [],
+            "inputs": ["$TURBO_DEFAULT$", ".oxlintrc.json"]
+        },
+        "dev": {
+            "persistent": true,
+            "cache": false,
+            "inputs": ["$TURBO_DEFAULT$", ".env"]
+        }
+    }
+}

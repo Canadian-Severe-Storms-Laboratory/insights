@@ -1,36 +1,49 @@
-![CSSL Insights](./assets/images/insights-banner-animated.gif)
+# insights
 
-## About
+Monorepo for Insights application comprising client, server, worker, and shared packages.
 
-**CSSL Insights** is a web application platform developed by research students to support the <a href="https://www.uwo.ca/ntp/">Canadian Severe Storms Lab</a>'s capacity in collecting, analyzing, and sharing important research data in a meaningful way.
+## Packages
 
-## Tools
+- `@insights/client`: Client-side implementation for the Insights application.
+- `@insights/server`: Server-side implementation for the Insights application.
+- `@insights/worker`: Background worker application for the Insights platform.
+- `@insights/shared`: Shared utilities, connections, and types for Insight applications.
 
-[**NTP 360**](docs/NTP_360.md) - Damage survey VR panorama viewer<br>
-[**NTP LiDAR**](docs/NTP_LIDAR.md) - Damage survey LiDAR point cloud viewer<br>
-[**NTP Social**](docs/NTP_SOCIAL.md) (no longer maintained) - Social media scraping<br>
-[**NHP Hailgen**](docs/NHP_HAILGEN.md) - Automated hailpad dent analysis
+## Getting Started
 
-## Accounts
+To get started with the Insights monorepo, follow these steps:
 
-> `01` **Sign-in Process**
+1. `bun install`
+2. Setup .env files for each package as needed.
+3. Start required services (e.g., databases, message brokers). A `docker-compose.yml` file was provided for convenience.
+4. `bun run dev` to start all packages in development mode.
+5. Access the client application at `http://localhost:5173`. This is the default port for Vite.
+6. `bun run build` to build all packages for production.
 
-Users can create an CSSL Insights account using one of two methods: by entering their email address or by linking their Discord account. If using an email address, a verification email will be sent with a link to proceed. If using a Discord account, a pop-up will prompt the user to authorize the account.
+## Development
 
-<img width="400" src="./assets/images/Signin.png" />
+### Running the applications
 
-> `02` **Account Customization**
+- Use `bun dev` to start all applications in development mode. (top level)
+- `bun dev` can be used in each package directory to start individual applications.
+- When in development mode, the `.env` & `.env.local` file is loaded from the root of the monorepo.
 
-Upon initial account creation, the user will be prompted to set their profile settings, including their name and profile picture (optional). Profile settings can be accessed at any time through the main dropdown in the top right corner of the screen.
+## FAQ
 
-<img width="400" src="./assets/images/profile_settings.png" />
+### How do I add a new package?
 
-> `03` **Authentication**
+1. Create a new directory under the `apps` or `packages` folder.
+2. Initialize a new Bun project using `bun init`.
+3. Add the new package to the monorepo by updating the `bun.lock` file.
+4. Update the root `package.json` scripts if necessary.
+5. Install dependencies using `bun install`.
 
-For full access to the CSSL Insights feature set, a user must be `CSSL Authenticated`. Any currently authenticated user can authenticate other users by navigating to `Settings > Authenticate Users`.
+### Why is the point cloud worker separate from the main worker?
 
-> `04` **Main Dashboard and Navigation**
+The point cloud worker can be resource-intensive and requires PotreeConverter to be installed on the system. Separating it allows for better resource management and scalability.
 
-The main dashboard provides quick access to the three CSSL Insights software tools. The navigation bar at the top persists on every CSSL Insights page and includes a main dropdown with access to all CSSL Insights pages and a button to configure the website theme.
+### How do I update the database schema?
 
-<img width="400" src="./assets/images/ntp_home.png" />
+The schema is located in the `@insights/shared` package under `src/db/schema/*`. Update the schema files as needed and ensure to run any necessary migrations on the database.
+
+For more detailed database documentation, refer to the [drizzle-orm documentation](https://orm.drizzle.team/).
