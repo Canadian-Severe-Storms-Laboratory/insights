@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { client, createAxiosPostFormHandler, type Pad } from '@/lib/client';
 import { useNavigate } from '@tanstack/react-router';
 import cv from '@techstark/opencv-js';
-import { InfoIcon, RefreshCcw, ScanLineIcon } from 'lucide-react';
+import { ArrowRight, InfoIcon, RefreshCcw, ScanLineIcon } from 'lucide-react';
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -263,7 +263,7 @@ export default function MaskEditor({
     };
 
     return (
-        <Card className="sm:min-w-[500px]">
+        <Card className="w-fit mx-auto rounded-lg">
             <CardHeader>
                 <CardTitle>{hailpad.name}</CardTitle>
                 <CardDescription>
@@ -274,8 +274,8 @@ export default function MaskEditor({
                 <div className="flex flex-row gap-4">
                     <div className="relative flex flex-col gap-4">
                         {!depthMap ? (
-                            <div className="border-black-900 flex h-[500px] w-[500px] flex-row justify-center rounded-md border opacity-70">
-                                <Spinner /> Loading Depth Map...
+                            <div className="border-black-900 flex flex-col h-[500px] w-[500px] justify-center items-center gap-2 rounded-md border opacity-70">
+                                <Spinner /> Processing Depth Map...
                             </div>
                         ) : (
                             <>
@@ -543,7 +543,7 @@ export default function MaskEditor({
                                 {uploading ? (
                                     <Spinner className="h-4 w-4" />
                                 ) : (
-                                    <ScanLineIcon className="h-4 w-4" />
+                                    <ArrowRight />
                                 )}
                             </Button>
                         </div>

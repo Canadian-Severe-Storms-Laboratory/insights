@@ -1,6 +1,12 @@
+![CSSL Insights](docs/insights-banner.gif)
+
 # insights
 
-Monorepo for Insights application comprising client, server, worker, and shared packages.
+Monorepo for Insights application comprising client, server, worker, and shared packages associated with the following severe storms research tools:
+
+[**NTP 360**](docs/NTP_360.md) - Damage survey VR panorama viewer\
+[**NTP LiDAR**](docs/NTP_LIDAR.md) - Damage survey LiDAR point cloud viewer\
+[**NHP Hailgen**](docs/NHP_HAILGEN.md) - Automated hailpad dent analysis
 
 ## Packages
 

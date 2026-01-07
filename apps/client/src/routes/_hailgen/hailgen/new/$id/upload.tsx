@@ -1,5 +1,6 @@
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { FileDropZone, type FileState } from '@/components/ui/file-drop-zone';
 import { Spinner } from '@/components/ui/spinner';
 import { depthMapQueryKey } from '@/hooks/use-depth-map';
@@ -15,6 +16,7 @@ import {
     useNavigate
 } from '@tanstack/react-router';
 import { DetailedError, parseResponse } from 'hono/client';
+import { ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -140,23 +142,25 @@ function RouteComponent() {
     };
 
     return (
-        <div>
-            <FileDropZone
-                files={files}
-                setFiles={handleSetFiles}
-                fileStates={fileStates}
-                acceptedFileTypes={['.stl']}
-                onReset={() => {
-                    setFileStates({});
-                }}
-                multiple={false}
-            />
-            <div className="mt-4 flex flex-row items-center justify-between">
-                <Button onClick={handleUpload} disabled={files.length === 0 || isUploading}>
-                    {isUploading && <Spinner className="mr-2 size-4" />}
-                    {isUploading ? 'Uploading...' : `Upload hailpad`}
-                </Button>
-            </div>
-        </div>
+        <Card className="min-w-xs max-w-[500px] rounded-lg mx-auto">
+            <CardContent className="flex flex-col justify-between min-h-[300px] gap-6">
+                <FileDropZone
+                    files={files}
+                    setFiles={handleSetFiles}
+                    fileStates={fileStates}
+                    acceptedFileTypes={['.stl']}
+                    onReset={() => {
+                        setFileStates({});
+                    }}
+                    multiple={false}
+                />
+                <div className="flex justify-end">
+                    <Button className="flex min-w-[200px] gap-2 w-fit" onClick={handleUpload} disabled={files.length === 0 || isUploading}>
+                        {isUploading ? 'Uploading...' : `Upload Hailpad Mesh and Continue`}
+                        {isUploading ? <Spinner className="mr-2 size-4" /> : <ArrowRight />}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
