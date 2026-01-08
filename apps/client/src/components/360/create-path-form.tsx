@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { $createPath } from '@/lib/client';
 import { cn, isFormFieldInvalid } from '@/lib/utils';
+import { Arrow } from '@radix-ui/react-dropdown-menu';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import { DetailedError, parseResponse } from 'hono/client';
-import { CalendarIcon } from 'lucide-react';
+import { ArrowRight, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -105,7 +106,7 @@ export function CreatePathForm() {
                                     value={field.state.value}
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
-                                    placeholder="e.g. event-name"
+                                    placeholder="e.g., event-name"
                                     className={cn(
                                         field.state.meta.errors.length > 0 && 'border-destructive'
                                     )}
@@ -205,8 +206,9 @@ export function CreatePathForm() {
                 <form.Subscribe
                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                     children={([canSubmit, isSubmitting]) => (
-                        <Button type="submit" className="w-full" disabled={!canSubmit}>
-                            {isSubmitting ? 'Creating...' : 'Create Path'}
+                        <Button type="submit" className="flex w-full justify-between" disabled={!canSubmit}>
+                            {isSubmitting ? 'Creating...' : 'Create Path and Continue'}
+                            <ArrowRight />
                         </Button>
                     )}
                 />

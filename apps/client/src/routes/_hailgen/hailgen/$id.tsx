@@ -83,8 +83,8 @@ function RouteComponent() {
 
     const [xlsxLoading, setXlsxLoading] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [showCentroids, setShowCentroids] = useState(true);
-    const [showFittedEllipses, setShowFittedEllipses] = useState(true);
+    const [showCentroids, setShowCentroids] = useState(false);
+    const [showFittedEllipses, setShowFittedEllipses] = useState(false);
 
     if (isLoading) {
         return <LoadingComponent />;
@@ -112,8 +112,8 @@ function RouteComponent() {
     const dents = padFiltered.dents;
 
     return (
-        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3 lg:grid-rows-5">
-            <Card className="row-span-5 h-min lg:col-span-2">
+        <div className="flex w-full h-full gap-4 mx-auto lg:flex-row flex-col justify-center items-start">
+            <Card className="w-fit h-full flex-shrink-0">
                 <CardHeader>
                     <CardTitle>{name}</CardTitle>
                     <CardDescription>
@@ -132,56 +132,58 @@ function RouteComponent() {
                     </Suspense>
                 </CardContent>
             </Card>
-            <div className="lg:row-span-3">
-                <Suspense fallback={<LoadingComponent />}>
-                    <HailpadDetails
-                        padId={id}
-                        centroids={{
-                            value: showCentroids,
-                            onChange: setShowCentroids
-                        }}
-                        fittedEllipses={{
-                            value: showFittedEllipses,
-                            onChange: setShowFittedEllipses
-                        }}
-                        downloadLoading={xlsxLoading}
-                        handleDownload={() => {
-                            setXlsxLoading(true);
-                            try {
-                                // Generate XLSX of unfiltered dents
-                                generateHailpadExcelFile(pad, pad.dents);
-                            } catch (error) {
-                                console.error('Error generating Excel file:', error);
-                                toast.error('Failed to generate Excel file.');
-                            } finally {
-                                setXlsxLoading(false);
-                            }
-                        }}
-                    />
-                </Suspense>
-            </div>
-            <div className="lg:row-span-2">
-                <Suspense fallback={<LoadingComponent />}>
-                    <DentDetails
-                        padId={id}
-                        index={currentIndex}
-                        onPrevious={() => {
-                            if (currentIndex - 1 >= 0) {
-                                setCurrentIndex(currentIndex - 1);
-                            } else {
-                                setCurrentIndex(dents.length - 1);
-                            }
-                        }}
-                        onNext={() => {
-                            if (currentIndex + 1 < dents.length) {
-                                setCurrentIndex(currentIndex + 1);
-                            } else {
-                                setCurrentIndex(0);
-                            }
-                        }}
-                        onIndexChange={setCurrentIndex}
-                    />
-                </Suspense>
+            <div className="flex flex-col flex-1 gap-4 min-w-0 max-w-lg h-full">
+                <div className="flex-1 h-full">
+                    <Suspense fallback={<LoadingComponent />}>
+                        <HailpadDetails
+                            padId={id}
+                            centroids={{
+                                value: showCentroids,
+                                onChange: setShowCentroids
+                            }}
+                            fittedEllipses={{
+                                value: showFittedEllipses,
+                                onChange: setShowFittedEllipses
+                            }}
+                            downloadLoading={xlsxLoading}
+                            handleDownload={() => {
+                                setXlsxLoading(true);
+                                try {
+                                    // Generate XLSX of unfiltered dents
+                                    generateHailpadExcelFile(pad, pad.dents);
+                                } catch (error) {
+                                    console.error('Error generating Excel file:', error);
+                                    toast.error('Failed to generate Excel file.');
+                                } finally {
+                                    setXlsxLoading(false);
+                                }
+                            }}
+                        />
+                    </Suspense>
+                </div>
+                <div className="h-full">
+                    <Suspense fallback={<LoadingComponent />}>
+                        <DentDetails
+                            padId={id}
+                            index={currentIndex}
+                            onPrevious={() => {
+                                if (currentIndex - 1 >= 0) {
+                                    setCurrentIndex(currentIndex - 1);
+                                } else {
+                                    setCurrentIndex(dents.length - 1);
+                                }
+                            }}
+                            onNext={() => {
+                                if (currentIndex + 1 < dents.length) {
+                                    setCurrentIndex(currentIndex + 1);
+                                } else {
+                                    setCurrentIndex(0);
+                                }
+                            }}
+                            onIndexChange={setCurrentIndex}
+                        />
+                    </Suspense>
+                </div>
             </div>
         </div>
     );

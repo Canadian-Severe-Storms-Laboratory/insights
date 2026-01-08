@@ -184,7 +184,7 @@ export default function HailpadDetails({
     }
 
     return (
-        <Card>
+        <Card className="h-full flex flex-col">
             <CardHeader>
                 <div className="flex flex-row justify-between">
                     <div>
@@ -286,8 +286,8 @@ export default function HailpadDetails({
                     )}
                 </div>
             </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="minor">
+            <CardContent className="flex-1 flex flex-col min-h-0">
+                <Tabs defaultValue="minor" className="flex flex-col h-full">
                     <div className="flex flex-row items-center justify-between">
                         <TabsList>
                             <TabsTrigger value="minor">Minor Axis</TabsTrigger>

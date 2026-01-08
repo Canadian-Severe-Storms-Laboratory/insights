@@ -84,7 +84,7 @@ export default function DepthViewer({
     };
 
     return (
-        <Card className="sm:min-w-[500px]">
+        <Card className="w-fit mx-auto">
             <CardHeader>
                 <CardTitle>{hailpad.name}</CardTitle>
                 <CardDescription>
@@ -101,24 +101,25 @@ export default function DepthViewer({
                     <canvas ref={canvasRef} width={CANVAS_SIZE} height={CANVAS_SIZE} />
                 )}
             </CardContent>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
                 <CardContent>
                     <Label>Maximum Depth</Label>
                     <Input
                         type="number"
-                        placeholder="Maximum Depth"
+                        className="w-32 mt-2"
+                        placeholder="e.g., 3.11"
                         disabled={!depthMap}
                         value={maxDepth}
                         onChange={(e) => setMaxDepth(Number(e.target.value))}
                     />
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-end">
                     <Button
-                        className="flex w-full flex-row justify-between"
+                        className="flex min-w-[175px] gap-2 w-fit"
                         disabled={!depthMap || uploading}
                         onClick={handleSubmit}
                     >
-                        Finish
+                        Save and Finish
                         {uploading ? (
                             <Spinner className="h-4 w-4" />
                         ) : (

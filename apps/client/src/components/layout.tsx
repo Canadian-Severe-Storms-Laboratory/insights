@@ -10,9 +10,9 @@ export function Layout({
     action?: React.ReactNode;
 }>) {
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background flex flex-col">
             <Header title={title} action={action} />
-            <main className="mx-6">{children}</main>
+            <main className="flex-1 pt-4 mx-4">{children}</main>
         </div>
     );
 }

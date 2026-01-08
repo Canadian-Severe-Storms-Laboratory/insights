@@ -221,7 +221,7 @@ export default function DentDetails({
     }
 
     return (
-        <Card>
+        <Card className="h-full">
             <CardHeader>
                 <div className="flex flex-row justify-between">
                     <div>

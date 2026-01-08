@@ -72,7 +72,7 @@ function PadOptions({ pad }: { pad: Pad }) {
 
 export function PadCard({ pad }: { pad: Pad }) {
     return (
-        <Card className="w-full max-w-md">
+        <Card className="w-full">
             <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                     <div>
