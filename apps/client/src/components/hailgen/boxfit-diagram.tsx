@@ -1,10 +1,10 @@
-const aspectRatio = 49 / 58;
+const ASPECT_RATIO = 49 / 58;
 
 export function BoxfitDiagram({ size, className }: { size: number; className?: string }) {
 	return (
 		<svg
-			width={size * aspectRatio}
-			height={size * aspectRatio}
+			width={size * ASPECT_RATIO}
+			height={size * ASPECT_RATIO}
 			viewBox="0 0 49 58"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"

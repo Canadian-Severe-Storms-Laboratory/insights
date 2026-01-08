@@ -10,8 +10,8 @@ import { DetailedError, parseResponse } from 'hono/client';
 import { ArrowRight, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CardDescription } from '../ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CardDescription } from '@/components/ui/card';
 import { BoxfitDiagram } from './boxfit-diagram';
 
 const createScanSchema = z.object({
