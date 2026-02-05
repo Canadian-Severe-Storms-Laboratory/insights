@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "bun run --env-file=../../.env --hot src/index.ts",
         "build": "bun build src/index.ts --external sharp --outdir dist --target bun",
+        "build-types": "tsc",
         "start": "bun run dist/index.js",
         "clean": "rm -rf dist",
         "check-types": "tsc --noEmit",
