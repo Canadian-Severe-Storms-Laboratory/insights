@@ -36,11 +36,8 @@ export default function MagicLink({ link }: { link: string }) {
                             src="https://raw.githubusercontent.com/Canadian-Severe-Storms-Laboratory/insights/refs/heads/main/docs/icons/cssl-dark.gif"
                             height={100}
                             width={100}
-                            alt="CSSL Logo"
+                            alt="CSSL Insights Logo"
                         />
-                        <Heading as="h2" className="text-[22px] font-bold">
-                            CSSL Insights
-                        </Heading>
                         <Heading className="mt-12 text-[28px] font-bold">
                             Verify your email address
                         </Heading>
