@@ -1,0 +1,29 @@
+{
+    "name": "@insights/transactional",
+    "type": "module",
+    "private": true,
+    "exports": {
+        "./emails": "./src/emails/index.ts"
+    },
+    "scripts": {
+        "email:dev": "email dev --dir src/emails",
+        "check-types": "tsc --noEmit",
+        "lint": "oxlint -c ../../.oxlintrc.json 'src/**/*.ts' 'src/**/*.tsx'"
+    },
+    "devDependencies": {
+        "@react-email/preview-server": "5.2.8",
+        "@types/bun": "latest",
+        "drizzle-kit": "^0.31.7",
+        "esbuild": "0.25.10",
+        "react-email": "5.2.8",
+        "tsc-alias": "^1.8.16"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@react-email/components": "1.0.7",
+        "react": "19.2.4",
+        "react-dom": "19.2.4"
+    }
+}

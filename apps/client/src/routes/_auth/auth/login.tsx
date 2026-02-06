@@ -51,7 +51,9 @@ function RouteComponent() {
                 });
 
                 if (result.error) {
-                    toast.error(`Login failed: ${result.error.statusText || 'Unknown error'}`);
+                    toast.error(
+                        `Login failed: ${result.error.message || result.error.statusText || 'Unknown error'}`
+                    );
                     return;
                 }
             } catch (error) {
@@ -119,9 +121,8 @@ function RouteComponent() {
                         );
                     }}
                 </loginForm.Field>
-                <loginForm.Subscribe
-                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                    children={([canSubmit, isSubmitting]) => (
+                <loginForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                    {([canSubmit, isSubmitting]) => (
                         <Button
                             type="submit"
                             className="w-full"
@@ -130,7 +131,7 @@ function RouteComponent() {
                             {isSubmitting ? 'Logging in...' : 'Login'}
                         </Button>
                     )}
-                />
+                </loginForm.Subscribe>
                 <Link to="/auth/register">
                     <Button type="button" variant="secondary" className="w-full">
                         Register
