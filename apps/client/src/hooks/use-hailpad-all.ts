@@ -2,7 +2,7 @@ import { $getPadByIdAll } from '@/lib/client';
 import { HAILPAD_IMAGE_SIZE } from '@/lib/hailgen/helpers';
 import { useQuery } from '@tanstack/react-query';
 import { parseResponse } from 'hono/client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 
 const fetchPadAll = async (id: string) => {
     const response = await parseResponse(
@@ -20,13 +20,48 @@ export function padAllQueryKey(padId: string) {
     return ['hailgen', 'pads', padId, 'all'];
 }
 
+type FilterState = {
+    minMinor: number;
+    maxMinor: number;
+    minMajor: number;
+    maxMajor: number;
+};
+
+let filterState: FilterState = {
+    minMinor: 0,
+    maxMinor: Infinity,
+    minMajor: 0,
+    maxMajor: Infinity
+};
+
+const listeners = new Set<() => void>();
+
+function subscribeToFilter(callback: () => void) {
+    listeners.add(callback);
+    return () => {
+        listeners.delete(callback);
+    };
+}
+
+function getFilterSnapshot() {
+    return filterState;
+}
+
+function setFilterState(newState: FilterState | ((prev: FilterState) => FilterState)) {
+    filterState = typeof newState === 'function' ? newState(filterState) : newState;
+    listeners.forEach(listener => listener());
+}
+
 export function usePadAll(padId: string) {
-    const [filter, setFilter] = useState({
-        minMinor: 0,
-        maxMinor: Infinity,
-        minMajor: 0,
-        maxMajor: Infinity
-    });
+    const filter = useSyncExternalStore(
+        subscribeToFilter,
+        getFilterSnapshot,
+        getFilterSnapshot
+    );
+
+    const setFilter = (newState: FilterState | ((prev: FilterState) => FilterState)) => {
+        setFilterState(newState);
+    };
 
     const query = useQuery({
         queryKey: padAllQueryKey(padId),
@@ -64,15 +99,13 @@ export function usePadAll(padId: string) {
     }, [query.data, filter]);
 
     useEffect(() => {
-        setFilter((prev) => ({
-            ...prev,
-            maxMinor: query.data
-                ? Math.max(...query.data.dents.map((d) => Number(d.minorAxis)))
-                : Infinity,
-            maxMajor: query.data
-                ? Math.max(...query.data.dents.map((d) => Number(d.majorAxis)))
-                : Infinity
-        }));
+        if (query.data) {
+            setFilter((prev) => ({
+                ...prev,
+                maxMinor: Math.max(...query.data.dents.map((d) => Number(d.minorAxis))),
+                maxMajor: Math.max(...query.data.dents.map((d) => Number(d.majorAxis)))
+            }));
+        }
     }, [query.data]);
 
     return {

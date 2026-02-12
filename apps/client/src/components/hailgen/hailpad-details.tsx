@@ -199,7 +199,7 @@ export default function HailpadDetails({
                                         <SettingsIcon />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-76">
+                                <PopoverContent className="w-80">
                                     <div className="space-y-4">
                                         <div className="mb-6">
                                             <p className="text-lg font-semibold">View</p>
