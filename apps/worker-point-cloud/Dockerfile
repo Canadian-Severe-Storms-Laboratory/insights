@@ -7,12 +7,15 @@ RUN apt-get update && apt-get install -y curl
 RUN apt-get install -y \
     libtbb-dev
 
+# --- 1. Prepare Stage (Pruning) ---
 FROM base AS prepare
 RUN bun add -g turbo@^2
 COPY . .
 RUN turbo prune --docker @insights/worker-point-cloud
 
-FROM base AS install
+
+# --- 2. Builder Stage (C++ & Bun Install + Build) ---
+FROM base AS builder
 
 # Install dependencies for Ubuntu
 RUN apt-get install -y \
@@ -33,22 +36,27 @@ RUN git clone -b develop https://github.com/potree/PotreeConverter.git && cd Pot
 
 WORKDIR /app
 COPY --from=prepare /app/out/json/ .
+
+# Install dependencies (creates the global cache, devDependencies, & workspace symlinks)
 RUN bun install --frozen-lockfile
 
-FROM base AS build
-COPY --from=install /app/node_modules ./node_modules
-COPY --from=prepare /app/out/*/ .
+# Copy the actual source code over into the SAME stage
+COPY --from=prepare /app/out/full/ .
 COPY .oxlintrc.json .
 COPY tsconfig.* .
-ENV NODE_ENV=production
+
+# Run the build while the Bun cache and all workspace node_modules are intact
 RUN bun run build
 
+
+# --- 3. Release Stage ---
 FROM base AS release
 WORKDIR /app
 
 # Copy PotreeConverter and built worker-point-cloud files
-COPY --from=install --chown=bun:bun /temp/opt/PotreeConverter/build /potree
-COPY --from=build --chown=bun:bun /app/apps/worker-point-cloud/dist ./dist
+COPY --from=builder --chown=bun:bun /temp/opt/PotreeConverter/build /potree
+COPY --from=builder /usr/local/lib/liblaszip.so /usr/local/lib/
+COPY --from=builder --chown=bun:bun /app/apps/worker-point-cloud/dist ./dist
 
 USER bun
 ENV NODE_ENV=production \
