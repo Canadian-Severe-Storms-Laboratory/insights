@@ -1,4 +1,4 @@
-FROM oven/bun:1-debian AS base
+FROM oven/bun:1.3.11-debian AS base
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl
