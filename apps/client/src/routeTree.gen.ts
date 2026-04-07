@@ -160,14 +160,14 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthAuthLoginRoute
   '/auth/register': typeof AuthAuthRegisterRoute
   '/hailgen/$id': typeof HailgenHailgenIdRoute
-  '/360': typeof R360360IndexRoute
-  '/hailgen': typeof HailgenHailgenIndexRoute
-  '/lidar': typeof LidarLidarIndexRoute
+  '/360/': typeof R360360IndexRoute
+  '/hailgen/': typeof HailgenHailgenIndexRoute
+  '/lidar/': typeof LidarLidarIndexRoute
   '/lidar/$id/log': typeof LidarLidarIdLogRoute
-  '/360/new': typeof R360360NewIndexRoute
-  '/hailgen/new': typeof HailgenHailgenNewIndexRoute
-  '/lidar/$id': typeof LidarLidarIdIndexRoute
-  '/lidar/new': typeof LidarLidarNewIndexRoute
+  '/360/new/': typeof R360360NewIndexRoute
+  '/hailgen/new/': typeof HailgenHailgenNewIndexRoute
+  '/lidar/$id/': typeof LidarLidarIdIndexRoute
+  '/lidar/new/': typeof LidarLidarNewIndexRoute
   '/360/new/$id/captures': typeof R360360NewIdCapturesRoute
   '/360/new/$id/panoramas': typeof R360360NewIdPanoramasRoute
   '/hailgen/new/$id/depth': typeof HailgenHailgenNewIdDepthRoute
@@ -233,14 +233,14 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/hailgen/$id'
-    | '/360'
-    | '/hailgen'
-    | '/lidar'
+    | '/360/'
+    | '/hailgen/'
+    | '/lidar/'
     | '/lidar/$id/log'
-    | '/360/new'
-    | '/hailgen/new'
-    | '/lidar/$id'
-    | '/lidar/new'
+    | '/360/new/'
+    | '/hailgen/new/'
+    | '/lidar/$id/'
+    | '/lidar/new/'
     | '/360/new/$id/captures'
     | '/360/new/$id/panoramas'
     | '/hailgen/new/$id/depth'
@@ -311,28 +311,28 @@ declare module '@tanstack/react-router' {
     '/_lidar': {
       id: '/_lidar'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof LidarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_hailgen': {
       id: '/_hailgen'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof HailgenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
       id: '/_auth'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_360': {
       id: '/_360'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof R360RouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -346,21 +346,21 @@ declare module '@tanstack/react-router' {
     '/_lidar/lidar/': {
       id: '/_lidar/lidar/'
       path: '/lidar'
-      fullPath: '/lidar'
+      fullPath: '/lidar/'
       preLoaderRoute: typeof LidarLidarIndexRouteImport
       parentRoute: typeof LidarRoute
     }
     '/_hailgen/hailgen/': {
       id: '/_hailgen/hailgen/'
       path: '/hailgen'
-      fullPath: '/hailgen'
+      fullPath: '/hailgen/'
       preLoaderRoute: typeof HailgenHailgenIndexRouteImport
       parentRoute: typeof HailgenRoute
     }
     '/_360/360/': {
       id: '/_360/360/'
       path: '/360'
-      fullPath: '/360'
+      fullPath: '/360/'
       preLoaderRoute: typeof R360360IndexRouteImport
       parentRoute: typeof R360Route
     }
@@ -402,28 +402,28 @@ declare module '@tanstack/react-router' {
     '/_lidar/lidar/new/': {
       id: '/_lidar/lidar/new/'
       path: '/lidar/new'
-      fullPath: '/lidar/new'
+      fullPath: '/lidar/new/'
       preLoaderRoute: typeof LidarLidarNewIndexRouteImport
       parentRoute: typeof LidarRoute
     }
     '/_lidar/lidar/$id/': {
       id: '/_lidar/lidar/$id/'
       path: '/lidar/$id'
-      fullPath: '/lidar/$id'
+      fullPath: '/lidar/$id/'
       preLoaderRoute: typeof LidarLidarIdIndexRouteImport
       parentRoute: typeof LidarRoute
     }
     '/_hailgen/hailgen/new/': {
       id: '/_hailgen/hailgen/new/'
       path: '/hailgen/new'
-      fullPath: '/hailgen/new'
+      fullPath: '/hailgen/new/'
       preLoaderRoute: typeof HailgenHailgenNewIndexRouteImport
       parentRoute: typeof HailgenRoute
     }
     '/_360/360/new/': {
       id: '/_360/360/new/'
       path: '/360/new'
-      fullPath: '/360/new'
+      fullPath: '/360/new/'
       preLoaderRoute: typeof R360360NewIndexRouteImport
       parentRoute: typeof R360Route
     }
