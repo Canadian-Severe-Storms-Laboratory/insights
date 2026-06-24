@@ -1,6 +1,8 @@
 import { CardGrid } from '@/components/card-grid';
 import { EmptyState } from '@/components/empty-state';
+import { FilterMenu } from '@/components/filter-menu';
 import { PadCard } from '@/components/hailgen/pad-card';
+import { SearchBar } from '@/components/search';
 import { Spinner } from '@/components/ui/spinner';
 import { $getAllPads } from '@/lib/client';
 import { useQuery } from '@tanstack/react-query';
@@ -44,15 +46,21 @@ function RouteComponent() {
     }
 
     return (
-        <CardGrid
-            items={data?.pads || []}
-            renderCard={(pad) => <PadCard pad={pad} />}
-            emptyState={
-                <EmptyState
-                    title="No Hailpads Found"
-                    description="There are no hailpads available at the moment."
-                />
-            }
-        />
+        <div className="flex gap-4">
+            <div className="w-sd flex basis-2xs flex-col items-start">
+                <SearchBar />
+                <FilterMenu />
+            </div>
+            <CardGrid
+                items={data?.pads || []}
+                renderCard={(pad) => <PadCard pad={pad} />}
+                emptyState={
+                    <EmptyState
+                        title="No Hailpads Found"
+                        description="There are no hailpads available at the moment."
+                    />
+                }
+            />
+        </div>
     );
 }
