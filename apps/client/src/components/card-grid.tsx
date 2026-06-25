@@ -12,7 +12,7 @@ export function CardGrid<T>({
     }
 
     return (
-        <div className="grid max-w-7xl grow grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid mx-auto max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item, index) => (
                 <div key={index}>{renderCard(item)}</div>
             ))}
