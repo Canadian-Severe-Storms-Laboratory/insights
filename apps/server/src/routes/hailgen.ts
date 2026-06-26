@@ -110,7 +110,7 @@ const router = new Hono<AppEnv>()
         const pads = await db.query.hailpads.findMany({
             where: (pad, { eq }) => eq(pad.hidden, false)
         });
-
+        pads.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime() )
         return c.json({ pads });
     })
     .get('/pads/:id', zValidator('param', idSchema), async (c) => {

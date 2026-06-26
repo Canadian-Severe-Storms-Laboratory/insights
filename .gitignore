@@ -38,3 +38,7 @@ uploads
 
 # Docker
 docker-compose.override.yml
+
+# Test postgres database
+current_pgdata
+pgdata

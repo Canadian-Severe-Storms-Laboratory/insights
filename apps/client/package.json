@@ -2,7 +2,7 @@
     "name": "@insights/client",
     "private": true,
     "type": "module",
-    "version": "2026.1",
+    "version": "2026.1.1",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
